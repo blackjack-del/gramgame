@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grammar Matrix Speed Drill</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    .container { max-width: 720px; width: 100%; background: var(--card); padding: 24px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 20px; }
+    .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .badge { padding: 6px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; background: #e2e8f0; }
+    .badge.present { background: #fef3c7; color: #b45309; }
+    .badge.past { background: #ffedd5; color: #c2410c; }
+    .badge.future { background: #dbeafe; color: #1d4ed8; }
+    .question-box { font-size: 1.35rem; font-weight: 700; margin: 24px 0; padding: 20px; background: #f1f5f9; border-radius: 12px; text-align: center; }
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    button.opt-btn { padding: 14px; font-size: 1rem; font-weight: 600; border: 2px solid #cbd5e1; border-radius: 10px; background: white; cursor: pointer; transition: 0.15s; }
+    button.opt-btn:hover { border-color: var(--primary); background: #eff6ff; }
+    .feedback { margin-top: 16px; padding: 14px; border-radius: 10px; display: none; font-weight: 500; }
+    .feedback.correct { display: block; background: #dcfce7; color: #15803d; }
+    .feedback.wrong { display: block; background: #fee2e2; color: #b91c1c; }
+    .cheat-btn { margin-top: 20px; background: #475569; color: white; border: none; padding: 10px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; }
+    .cheat-sheet { display: none; margin-top: 16px; overflow-x: auto; font-size: 0.85rem; }
+    table { width: 100%; border-collapse: collapse; text-align: center; }
+    th, td { border: 1px solid #cbd5e1; padding: 8px; }
+    th { background: #1e293b; color: white; }
+    .sub-neg { background: #f1f5f9; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <h2 style="margin:0;">⚡ Grammar Matrix Drill</h2>
+    <div>คะแนน: <strong id="score">0</strong> / <span id="total">0</span></div>
+  </div>
+
+  <div class="badges">
+    <span class="badge" id="b-subject">ประธาน: -</span>
+    <span class="badge" id="b-type">บริบท: -</span>
+    <span class="badge" id="b-tense">กาล: -</span>
+  </div>
+
+  <div class="question-box" id="question-text">กำลังโหลดโจทย์...</div>
+  <div class="options-grid" id="options-container"></div>
+  <div class="feedback" id="feedback-box"></div>
+
+  <button class="cheat-btn" onclick="toggleCheatSheet()">📖 เปิด/ปิด ตารางคัมภีร์ช่วยจำ (กดดูตอนนึกไม่ออก)</button>
+
+  <div class="cheat-sheet" id="cheat-sheet">
+    <table>
+      <thead>
+        <tr><th>ประธาน</th><th>บริบท</th><th>ปัจจุบัน (Present)</th><th>อดีต (Past)</th><th>อนาคต (Future)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td rowspan="3"><strong>I (ฉัน)</strong></td><td>บอกเล่า</td><td>am / do / V.1 ไม่เติม s</td><td>was / did / V.2</td><td>will + V.ธรรมดา</td></tr>
+        <tr class="sub-neg"><td>ปฏิเสธ</td><td>don't / am not</td><td>didn't / wasn't</td><td>won't + V.ธรรมดา</td></tr>
+        <tr><td>คำถาม</td><td>Do I...? / Am I...?</td><td>Did I...? / Was I...?</td><td>Will I...?</td></tr>
+        <tr><td rowspan="3"><strong>You</strong></td><td>บอกเล่า</td><td>are / do / V.1 ไม่เติม s</td><td>were / did / V.2</td><td>will + V.ธรรมดา</td></tr>
+        <tr class="sub-neg"><td>ปฏิเสธ</td><td>don't / aren't</td><td>didn't / weren't</td><td>won't + V.ธรรมดา</td></tr>
+        <tr><td>คำถาม</td><td>Do you...? / Are you...?</td><td>Did you...? / Were you...?</td><td>Will you...?</td></tr>
+        <tr><td rowspan="3"><strong>He/She/It</strong></td><td>บอกเล่า</td><td>is / does / V.1 เติม s/es</td><td>was / did / V.2</td><td>will + V.ธรรมดา</td></tr>
+        <tr class="sub-neg"><td>ปฏิเสธ</td><td>doesn't / isn't</td><td>didn't / wasn't</td><td>won't + V.ธรรมดา</td></tr>
+        <tr><td>คำถาม</td><td>Does he...? / Is he...?</td><td>Did he...? / Was he...?</td><td>Will he...?</td></tr>
+        <tr><td rowspan="3"><strong>We/They</strong></td><td>บอกเล่า</td><td>are / do / V.1 ไม่เติม s</td><td>were / did / V.2</td><td>will + V.ธรรมดา</td></tr>
+        <tr class="sub-neg"><td>ปฏิเสธ</td><td>don't / aren't</td><td>didn't / weren't</td><td>won't + V.ธรรมดา</td></tr>
+        <tr><td>คำถาม</td><td>Do they...? / Are they...?</td><td>Did they...? / Were they...?</td><td>Will they...?</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // ใส่ค่า URL และ ANON KEY จากโปรเจกต์ Supabase ของคุณ
+  const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+  // ข้อมูลสำรองในเครื่องกรณีที่ยังไม่ได้ใส่คีย์ Supabase
+  const fallbackQuestions = [
+    { subject_group: 'I (ฉัน)', sentence_type: 'ปฏิเสธ', tense: 'Past', prompt_sentence: 'I ___ (not / eat) breakfast yesterday.', correct_answer: "didn't eat", options: ["don't eat", "didn't eat", "didn't ate", "wasn't eat"], shortcut_hint: 'เมื่อปฏิเสธด้วย did กริยาแท้จะถูกล้างค่ากลับเป็นรูปธรรมดา (V.base) เสมอ' },
+    { subject_group: 'He / She / It (เอกพจน์)', sentence_type: 'บอกเล่า', tense: 'Present', prompt_sentence: 'She ___ (work) at the bank.', correct_answer: 'works', options: ['work', 'works', 'is work', 'working'], shortcut_hint: 'ประธานเอกพจน์ (He/She/It) บอกเล่า ปัจจุบัน กริยาช่อง 1 ต้องเติม s/es' },
+    { subject_group: 'He / She / It (เอกพจน์)', sentence_type: 'คำถาม', tense: 'Present', prompt_sentence: '___ he ___ (understand) the rule?', correct_answer: 'Does / understand', options: ['Do / understand', 'Does / understands', 'Does / understand', 'Is / understand'], shortcut_hint: 'เมื่อถามด้วย Does กริยาแท้จะถูกล้างค่ากลับเป็น V.base ไม่ต้องเติม s' },
+    { subject_group: 'We / They (พหูพจน์)', sentence_type: 'ปฏิเสธ', tense: 'Future', prompt_sentence: 'They ___ (not / join) the call tomorrow.', correct_answer: "won't join", options: ["don't join", "didn't join", "won't join", "won't joins"], shortcut_hint: 'อนาคต (Future) ประธานทุกตัวใช้ will / won\'t + V.ธรรมดา เหมือนกันหมด' }
+  ];
+
+  let questions = [];
+  let currentQ = null;
+  let score = 0, total = 0;
+  let sbClient = null;
+
+  if (SUPABASE_URL.startsWith('http')) {
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+
+  async function initGame() {
+    if (sbClient) {
+      const { data, error } = await sbClient.from('grammar_questions').select('*');
+      if (!error && data.length > 0) questions = data;
+    }
+    if (questions.length === 0) questions = fallbackQuestions;
+    nextQuestion();
+  }
+
+  function nextQuestion() {
+    document.getElementById('feedback-box').className = 'feedback';
+    currentQ = questions[Math.floor(Math.random() * questions.length)];
+
+    document.getElementById('b-subject').innerText = `ประธาน: ${currentQ.subject_group}`;
+    document.getElementById('b-type').innerText = `บริบท: ${currentQ.sentence_type}`;
+    const tenseBadge = document.getElementById('b-tense');
+    tenseBadge.innerText = `กาล: ${currentQ.tense}`;
+    tenseBadge.className = `badge ${currentQ.tense.toLowerCase()}`;
+
+    document.getElementById('question-text').innerText = currentQ.prompt_sentence;
+
+    const container = document.getElementById('options-container');
+    container.innerHTML = '';
+    currentQ.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.innerText = opt;
+      btn.onclick = () => checkAnswer(opt);
+      container.appendChild(btn);
+    });
+  }
+
+  async function checkAnswer(selected) {
+    total++;
+    const isCorrect = (selected === currentQ.correct_answer);
+    const fb = document.getElementById('feedback-box');
+
+    if (isCorrect) {
+      score++;
+      fb.className = 'feedback correct';
+      fb.innerHTML = `✅ <strong>ถูกต้อง!</strong> (${currentQ.shortcut_hint}) <br><button onclick="nextQuestion()" style="margin-top:8px;padding:6px 12px;cursor:pointer;">ข้อต่อไป ➡️</button>`;
+    } else {
+      fb.className = 'feedback wrong';
+      fb.innerHTML = `❌ <strong>ยังไม่ถูก!</strong> คำตอบคือ <u>${currentQ.correct_answer}</u><br>💡 <em>Shortcut: ${currentQ.shortcut_hint}</em><br><button onclick="nextQuestion()" style="margin-top:8px;padding:6px 12px;cursor:pointer;">แก้ตัวข้อต่อไป ➡️</button>`;
+    }
+
+    document.getElementById('score').innerText = score;
+    document.getElementById('total').innerText = total;
+
+    if (sbClient) {
+      await sbClient.from('practice_logs').insert([{
+        subject_group: currentQ.subject_group,
+        sentence_type: currentQ.sentence_type,
+        tense: currentQ.tense,
+        is_correct: isCorrect
+      }]);
+    }
+  }
+
+  function toggleCheatSheet() {
+    const sheet = document.getElementById('cheat-sheet');
+    sheet.style.display = sheet.style.display === 'block' ? 'none' : 'block';
+  }
+
+  initGame();
+</script>
+</body>
+</html>
