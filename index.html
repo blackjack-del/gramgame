@@ -377,9 +377,8 @@
   const SUPABASE_URL = 'https://cbdqxxsvnxklmoaesgec.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiZHF4eHN2bnhrbG1vYWVzZ2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2ODA3NDMsImV4cCI6MjEwODI1Njc0M30.TiR4pL-w3pe4ay0yaTktq1nu2EuYqLvFoUSNk5Ye6BY';
 
-  // ลบโจทย์ 36 ข้อเดิมทิ้ง เก็บไว้แค่ข้อเดียวเผื่อ Database ยังไม่เชื่อมต่อ
   const fallbackQuestions = [
-    { subject_group: 'I (ฉัน)', sentence_type: 'บอกเล่า', tense: 'Present', prompt_sentence: 'ระบบกำลังดึงข้อมูล... I ___ (love) English.', correct_answer: 'love', options: ['love', 'loves'], shortcut_hint: 'รอเชื่อมต่อ Database' }
+    { subject_group: 'I (ฉัน)', sentence_type: 'บอกเล่า', tense: 'Present', prompt_sentence: 'ระบบกำลังดึงข้อมูล... I ___ (love) English.', correct_answer: 'love', options: '["love", "loves"]', shortcut_hint: 'รอเชื่อมต่อ Database' }
   ];
 
   const MATRIX_ROWS_CONFIG = [
@@ -445,14 +444,13 @@
       const payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
       currentUser = payload.name || payload.email;
       loginType = 'Google OAuth';
-      saveUserToLocalStorage(currentUser);
+      // บัญชีที่ล็อกอินผ่าน Google จะไม่ถูกบันทึกใน LocalStorage Dropdown ตามที่ร้องขอ
       startAppSession();
     } catch (error) {
       console.error("Google Auth Error:", error); alert("เกิดข้อผิดพลาดในการถอดรหัส Google Profile");
     }
   }
 
-  // เคลียร์ค่าหน่วยความจำ (แก้บั๊กคะแนนค้าง)
   function clearLocalGameState() {
     practiceLogs = []; questionQueue = []; score = 0; currentIndex = 0; currentQ = null;
     document.getElementById('score').innerText = '0';
@@ -463,7 +461,7 @@
 
   function logout() {
     currentUser = null; loginType = null;
-    clearLocalGameState(); // ล้าง Memory
+    clearLocalGameState();
     document.getElementById('app-main').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('username-input').value = '';
@@ -476,14 +474,15 @@
     if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); return; }
     
     let savedUsers = JSON.parse(localStorage.getItem('grammar_recent_users') || '[]');
-    savedUsers = savedUsers.filter(u => u !== currentUser);
-    localStorage.setItem('grammar_recent_users', JSON.stringify(savedUsers));
+    if(savedUsers.includes(currentUser)){
+         savedUsers = savedUsers.filter(u => u !== currentUser);
+         localStorage.setItem('grammar_recent_users', JSON.stringify(savedUsers));
+    }
     
     alert(`ลบโปรไฟล์ ${currentUser} เรียบร้อยแล้ว`);
     logout();
   }
 
-  // ปุ่มรีเซ็ตคะแนน ข้างปุ่มรีเฟรช
   async function resetUserLogs() {
     if (!confirm(`คุณต้องการล้างประวัติคะแนนของ "${currentUser}" เริ่มต้นใหม่ใช่หรือไม่?`)) return;
     const { error } = await sbClient.from('practice_logs').delete().eq('username', currentUser);
@@ -509,7 +508,7 @@
     document.getElementById('display-user-name').innerText = currentUser;
     document.getElementById('display-login-type').innerText = loginType;
     
-    clearLocalGameState(); // ล้าง Memory ก่อนโหลดข้อมูลใหม่
+    clearLocalGameState();
 
     const { data, error } = await sbClient.from('grammar_questions').select('*');
     if (!error && data && data.length > 0) { allQuestions = data; }
@@ -520,7 +519,7 @@
   }
 
   async function fetchPracticeLogs() {
-    practiceLogs = []; // สำคัญ: ล้างค่าเก่าก่อนดึงค่าใหม่
+    practiceLogs = [];
     const { data, error } = await sbClient.from('practice_logs').select('*').eq('username', currentUser);
     if (!error && data) practiceLogs = data;
   }
@@ -659,7 +658,21 @@
     highlightCurrentMatrixRow();
     const container = document.getElementById('options-container');
     container.innerHTML = '';
-    currentQ.options.forEach(opt => {
+    
+    let optionsArray = [];
+    try {
+        // จัดการกรณี options ถูกเก็บเป็น String JSON ใน Supabase (กันการลืม Parse)
+        if (typeof currentQ.options === 'string') {
+             optionsArray = JSON.parse(currentQ.options);
+        } else {
+             optionsArray = currentQ.options;
+        }
+    } catch (e) {
+        optionsArray = [currentQ.correct_answer];
+        console.error("Failed to parse options array:", e);
+    }
+
+    optionsArray.forEach(opt => {
       const btn = document.createElement('button');
       btn.className = 'opt-btn'; btn.innerText = opt;
       btn.onclick = () => checkAnswer(opt, btn);
