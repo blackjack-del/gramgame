@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grammar Matrix Speed Drill</title>
+  <!-- โหลด Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- โหลดไลบรารี Google OAuth 2.0 ของจริง -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
     * { box-sizing: border-box; }
@@ -13,14 +16,12 @@
     
     /* Login Screen */
     #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; gap: 20px; }
-    .login-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 30px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+    .login-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 30px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); align-items: center; }
     .login-box h2 { margin: 0 0 10px; color: #0f172a; }
     .login-input, .login-select { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 0.95rem; background: #ffffff; }
     .btn-login { width: 100%; padding: 12px; border-radius: 10px; background: #2563eb; color: white; border: none; font-weight: 700; cursor: pointer; font-size: 1rem; transition: 0.2s; }
     .btn-login:hover { background: #1d4ed8; }
-    .btn-google { width: 100%; padding: 12px; border-radius: 10px; background: #ffffff; color: #334155; border: 1.5px solid #cbd5e1; font-weight: 700; cursor: pointer; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.2s; }
-    .btn-google:hover { background: #f1f5f9; border-color: #94a3b8; }
-    .divider { display: flex; align-items: center; text-align: center; color: #64748b; font-size: 0.85rem; margin: 5px 0; }
+    .divider { display: flex; align-items: center; text-align: center; color: #64748b; font-size: 0.85rem; margin: 5px 0; width: 100%; }
     .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #cbd5e1; }
     .divider::before { margin-right: .75em; }
     .divider::after { margin-left: .75em; }
@@ -38,15 +39,12 @@
     .filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
     .filter-group { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 700; color: #475569; }
     .filter-group select { padding: 8px 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.88rem; font-weight: 600; background: #ffffff; color: #1e293b; cursor: pointer; }
-    
     .toggle-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; border-top: 1px dashed #cbd5e1; padding-top: 10px; }
     .toggle-group { display: flex; gap: 8px; flex-wrap: wrap; }
     .toggle-btn { padding: 7px 12px; border-radius: 8px; font-size: 0.83rem; font-weight: 700; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; gap: 6px; }
     .toggle-btn.active { background: #eff6ff; border-color: #2563eb; color: #1d4ed8; }
     .toggle-btn.dash-btn { background: #0f172a; color: #ffffff; border-color: #0f172a; }
-    .toggle-btn.dash-btn:hover { background: #1e293b; }
     .toggle-btn.reset-btn { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
-    .toggle-btn.reset-btn:hover { background: #fecaca; }
 
     /* Badges & Question Box */
     .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
@@ -55,7 +53,6 @@
     .badge.past { background: #ffedd5; color: #c2410c; }
     .badge.future { background: #ede9fe; color: #6d28d9; }
     .badge.row-ref { background: #fef08a; color: #854d0e; border: 1px solid #facc15; }
-
     .question-box { font-size: 1.35rem; font-weight: 700; margin: 16px 0 20px; padding: 24px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center; }
     .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } }
@@ -69,13 +66,10 @@
     .feedback { margin-top: 16px; padding: 16px; border-radius: 10px; display: none; font-weight: 500; line-height: 1.5; }
     .feedback.correct { display: block; background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
     .feedback.wrong { display: block; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
-    
     .full-sentence-box { margin-top: 10px; padding: 10px 14px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 1px solid #86efac; color: #0f172a; font-size: 1.05rem; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
     .action-row { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
-    .tts-btn { padding: 8px 14px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; }
-    .tts-btn:hover { background: #0369a1; }
+    .tts-btn { padding: 8px 14px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
     .next-btn { padding: 8px 18px; background: #15803d; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
-    .next-btn:hover { background: #166534; }
 
     /* Dashboard & History */
     .dashboard-panel { display: none; margin-top: 20px; background: #ffffff; border: 2px solid #cbd5e1; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -93,12 +87,9 @@
     .history-list { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
     .history-item { font-size: 0.82rem; padding: 6px 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; }
 
-    /* Cheat Sheet */
-    .cheat-btn { margin-top: 20px; background: linear-gradient(135deg, #1e293b, #334155); color: white; border: none; padding: 13px 18px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; font-size: 1rem; transition: 0.2s; box-shadow: 0 3px 8px rgba(0,0,0,0.12); }
-    .cheat-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 12px rgba(0,0,0,0.18); }
+    /* Cheat Sheet & Table */
+    .cheat-btn { margin-top: 20px; background: linear-gradient(135deg, #1e293b, #334155); color: white; border: none; padding: 13px 18px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; font-size: 1rem; }
     .cheat-sheet { display: none; margin-top: 22px; }
-
-    /* Main Table Infographic */
     .main-table-card { background: #ffffff; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 24px; }
     .main-table-banner { background: linear-gradient(90deg, #0f172a, #1e3a8a); color: #ffffff; padding: 12px 18px; font-weight: 800; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
     .main-table-banner span.sub-note { font-size: 0.8rem; font-weight: 500; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 999px; color: #e0f2fe; }
@@ -115,7 +106,6 @@
     tr.group-start td { border-top: 3px solid #334155 !important; }
     td.row-num { font-weight: 700; color: #64748b; background: #f8fafc; font-size: 0.8rem; }
     td.subj-cell { background: #f0fdfa; color: #0f766e; font-weight: 800; font-size: 1rem; border-right: 2px solid #99f6e4 !important; }
-    td.subj-cell small { display: block; font-weight: 600; color: #115e59; font-size: 0.8rem; margin-top: 3px; }
     .ctx-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; width: 72px; }
     .ctx-aff { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
     .ctx-neg { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
@@ -129,76 +119,57 @@
     td.active-grammar-cell { background: #fef08a !important; box-shadow: inset 0 0 0 3px #dc2626 !important; position: relative; animation: pulseCell 1.5s infinite alternate; }
     td.active-grammar-cell::after { content: "🎯 ข้อนี้"; position: absolute; top: 2px; right: 4px; background: #dc2626; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 1px 5px; border-radius: 4px; }
     @keyframes pulseCell { from { filter: brightness(1); } to { filter: brightness(0.95); } }
-
     .kw-pres { color: #15803d; font-weight: 800; } .kw-past { color: #c2410c; font-weight: 800; } .kw-fut { color: #6d28d9; font-weight: 800; } .kw-neg { color: #b91c1c; font-weight: 800; }
     .v-tag { display: inline-block; background: rgba(255,255,255,0.85); padding: 1px 6px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 0.8rem; font-weight: 600; color: #334155; }
-
-    /* Extra Cards */
-    .extra-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: stretch; }
-    .card-shortcut { background: #fffbeb; border: 2px solid #fde68a; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-    .card-shortcut-header { background: #fef08a; padding: 10px 14px; font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; color: #78350f; }
-    .shortcut-list { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-    .shortcut-item { display: flex; gap: 10px; align-items: flex-start; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 10px; font-size: 0.85rem; line-height: 1.45; border: 1px solid #fef3c7; }
-    .num-circle { width: 26px; height: 26px; border-radius: 50%; color: white; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.85rem; }
-    .num-1 { background: #16a34a; } .num-2 { background: #ea580c; } .num-3 { background: #6d28d9; }
-
-    .card-tense { background: #ffffff; border: 2px solid #93c5fd; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-    .card-tense-header { background: #1d4ed8; color: white; padding: 10px 14px; font-weight: 800; font-size: 1.05rem; text-align: center; }
-    .tense-rows { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
-    .tense-row { display: flex; border-radius: 10px; overflow: hidden; font-size: 0.82rem; border: 1px solid rgba(0,0,0,0.08); }
-    .tense-pill { width: 105px; color: white; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 6px; text-align: center; flex-shrink: 0; }
-    .tense-pill.pres { background: #16a34a; } .tense-pill.past { background: #ea580c; } .tense-pill.fut { background: #6d28d9; }
-    .tense-detail { padding: 8px 12px; flex: 1; line-height: 1.55; }
-    .tense-detail.pres-bg { background: #f0fdf4; } .tense-detail.past-bg { background: #fff7ed; } .tense-detail.fut-bg { background: #f5f3ff; }
-
-    .card-wh { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-    .card-wh-header { background: #e0f2fe; padding: 10px 14px; color: #0c4a6e; }
-    .card-wh-header .title { font-weight: 800; font-size: 1.05rem; display: flex; align-items: center; gap: 6px; }
-    .card-wh-header .subtitle { font-size: 0.78rem; color: #0369a1; margin-top: 2px; }
-    table.wh-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: left; }
-    table.wh-table td { padding: 6px 10px; border-bottom: 1px solid #bae6fd; }
-    table.wh-table tr:nth-child(even) { background: #e0f2fe; } table.wh-table tr:nth-child(odd) { background: #ffffff; }
-    table.wh-table td:first-child { font-weight: 700; color: #0f172a; } table.wh-table td:nth-child(2) { color: #334155; }
   </style>
 </head>
 <body>
 
 <div class="container">
 
-  <!-- หน้า Login: พิมพ์ชื่อ, เลือกประวัติจาก Dropdown, หรือ Google Login -->
+  <!-- หน้า Login Screen -->
   <div id="login-screen">
     <div class="login-box">
       <h2>🔐 เข้าสู่ระบบฝึกแกรมม่า</h2>
-      <p style="font-size:0.85rem; color:#64748b; margin-top:-5px;">เลือกวิธีเข้าใช้งานเพื่อบันทึก Score และประวัติส่วนบุคคลของคุณ</p>
+      <p style="font-size:0.85rem; color:#64748b; margin-top:-5px; margin-bottom: 5px;">เลือกวิธีเข้าใช้งานเพื่อบันทึก Score ส่วนบุคคล</p>
       
-      <!-- ตัวเลือกสำหรับผู้ที่เคย Login มาก่อน -->
-      <div id="recent-login-container" style="display:none; text-align:left;">
+      <!-- ปุ่ม Google Login (OAuth 2.0 ผ่าน GIS) -->
+      <!-- **** แก้ Client ID ตรง data-client_id ด้านล่างนี้ **** -->
+      <div id="g_id_onload"
+           data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com" 
+           data-context="signin"
+           data-ux_mode="popup"
+           data-callback="handleGoogleLogin"
+           data-auto_prompt="false">
+      </div>
+      <div class="g_id_signin"
+           data-type="standard"
+           data-shape="rectangular"
+           data-theme="outline"
+           data-text="signin_with"
+           data-size="large"
+           data-logo_alignment="left">
+      </div>
+
+      <div class="divider">หรือ พิมพ์ชื่อเข้าใช้งาน (Local)</div>
+
+      <!-- พิมพ์ชื่อและเลือกชื่อเดิม -->
+      <div id="recent-login-container" style="display:none; text-align:left; width:100%;">
         <label style="font-size:0.8rem; font-weight:700; color:#475569;">บัญชีที่เคยใช้งานล่าสุด:</label>
         <select id="recent-user-select" class="login-select" style="margin-top:4px;" onchange="selectRecentUser(this.value)">
           <option value="">-- เลือกบัญชีเดิมที่มีประวัติ --</option>
         </select>
       </div>
 
-      <div class="divider" id="name-divider" style="display:none;">หรือพิมพ์ชื่อใหม่</div>
-
-      <!-- ฟอร์มพิมพ์ชื่อ -->
-      <div style="text-align:left; display:flex; flex-direction:column; gap:6px;">
+      <div style="text-align:left; display:flex; flex-direction:column; gap:6px; width:100%;">
         <label style="font-size:0.8rem; font-weight:700; color:#475569;">พิมพ์ชื่อผู้ใช้งานของคุณ</label>
-        <input type="text" id="username-input" class="login-input" placeholder="เช่น Somchai / Alex">
+        <input type="text" id="username-input" class="login-input" placeholder="เช่น Somchai">
       </div>
       <button class="btn-login" onclick="loginWithName()">🚀 เข้าสู่ระบบด้วยชื่อนี้</button>
-
-      <div class="divider">หรือ</div>
-
-      <!-- ปุ่ม Google Account Login -->
-      <button class="btn-google" onclick="loginWithGoogle()">
-        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.13 0-5.78-2.11-6.73-4.96H1.19v3.15C3.17 21.31 7.27 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.19C.43 8.13 0 9.87 0 11.7c0 1.83.43 3.57 1.19 5.09l4.08-2.55z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.27 0 3.17 2.69 1.19 6.61l4.08 3.15c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
-        Login ด้วย Google Account
-      </button>
     </div>
   </div>
 
-  <!-- แอปหลัก (แสดงหลัง Login สำเร็จ) -->
+  <!-- แอปหลัก -->
   <div id="app-main">
     <div class="user-bar">
       <div>👤 ผู้ใช้งาน: <strong id="display-user-name">-</strong> (<span id="display-login-type">-</span>)</div>
@@ -209,18 +180,18 @@
       <h2 style="margin:0;">⚡ Grammar Matrix Drill</h2>
       <div class="stats">
         <div>ข้อที่: <strong id="q-progress">1 / 1</strong></div>
-        <div> Score ส่วนบุคคล: <strong id="score">0</strong></div>
+        <div> Score รอบนี้: <strong id="score">0</strong></div>
       </div>
     </div>
 
-    <!-- แผงควบคุม: ตัวกรอง, ปุ่มเปิด/ปิด, ปุ่มรีเซ็ตสถิติ -->
+    <!-- แผงควบคุม -->
     <div class="control-panel">
       <div class="filter-row">
         <div class="filter-group">
           <label>🎯 โหมดการฝึก</label>
           <select id="filter-mode" onchange="applyFiltersAndRestart()">
             <option value="all">ฝึกทั้งหมด (ตามตัวกรอง)</option>
-            <option value="mistakes">🔥 เฉพาะแถวที่เคยตอบผิด (ดึงจาก Supabase)</option>
+            <option value="mistakes">🔥 เฉพาะแถวที่เคยตอบผิด</option>
           </select>
         </div>
         <div class="filter-group">
@@ -260,7 +231,6 @@
         </div>
         <div class="toggle-group">
           <button class="toggle-btn dash-btn" onclick="toggleDashboard()">📊 Score & ประวัติส่วนบุคคล</button>
-          <!-- ปุ่มล้างประวัติสถิติ (Reset Logs) ตามคำขอ -->
           <button class="toggle-btn reset-btn" onclick="resetUserLogs()">🗑️ ล้างประวัติสถิติ (Reset Logs)</button>
         </div>
       </div>
@@ -280,7 +250,7 @@
       <div class="feedback" id="feedback-box"></div>
     </div>
 
-    <!-- หน้า Dashboard & ประวัติส่วนบุคคล -->
+    <!-- หน้า Dashboard -->
     <div class="dashboard-panel" id="dashboard-panel">
       <div class="dashboard-header">
         <h3 id="dash-title">📊 Score ส่วนบุคคล และ ประวัติการทำรายการ</h3>
@@ -289,13 +259,9 @@
       <div class="dashboard-body">
         <div class="dash-summary" id="dash-summary">กำลังคำนวณสถิติ...</div>
         <div class="dash-grid" id="dash-grid"></div>
-        
-        <!-- ส่วนประวัติการทำรายการย้อนหลัง -->
         <div class="history-section">
           <strong>📜 ประวัติการทำรายการล่าสุด (History Logs)</strong>
-          <div class="history-list" id="history-list">
-            <span style="font-size:0.82rem; color:#64748b;">ยังไม่มีประวัติการทำรายการ</span>
-          </div>
+          <div class="history-list" id="history-list"></div>
         </div>
       </div>
     </div>
@@ -303,11 +269,10 @@
     <button class="cheat-btn" onclick="toggleCheatSheet()">📖 เปิด/ปิด คัมภีร์ช่วยจำ</button>
 
     <div class="cheat-sheet" id="cheat-sheet">
-      <!-- ตารางหลัก 12 แถว -->
       <div class="main-table-card">
         <div class="main-table-banner">
           <span>📊 ตารางสรุปการจับคู่ประธานกับกริยาในทุกบริบท</span>
-          <span class="sub-note" id="banner-ref-note">🎯 กรอบสีทอง/แดง = ตำแหน่งของโจทย์ข้อปัจจุบัน</span>
+          <span class="sub-note" id="banner-ref-note">🎯 กรอบสีทอง/แดง = ตำแหน่งโจทย์ข้อปัจจุบัน</span>
         </div>
         <div class="main-table-wrap">
           <table class="main-table">
@@ -322,6 +287,7 @@
               </tr>
             </thead>
             <tbody>
+              <!-- Group 1: I -->
               <tr id="matrix-row-1" class="group-start row-aff" data-subject="I" data-type="บอกเล่า">
                 <td class="row-num">1</td><td class="subj-cell" rowspan="3">I<small>(ฉัน)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
                 <td class="td-pres" data-tense="Present"><span class="kw-pres">am / do</span><br><span class="v-tag">V.1 ไม่เติม s</span></td>
@@ -340,7 +306,7 @@
                 <td class="td-past" data-tense="Past"><span class="kw-past">Did</span> I...? / <span class="kw-past">Was</span> I...?</td>
                 <td class="td-fut" data-tense="Future"><span class="kw-fut">Will</span> I...?</td>
               </tr>
-
+              <!-- Group 2: You -->
               <tr id="matrix-row-4" class="group-start row-aff" data-subject="You" data-type="บอกเล่า">
                 <td class="row-num">4</td><td class="subj-cell" rowspan="3">You<small>(คุณ/พวกคุณ)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
                 <td class="td-pres" data-tense="Present"><span class="kw-pres">are / do</span><br><span class="v-tag">V.1 ไม่เติม s</span></td>
@@ -359,7 +325,7 @@
                 <td class="td-past" data-tense="Past"><span class="kw-past">Did</span> you...? / <span class="kw-past">Were</span> you...?</td>
                 <td class="td-fut" data-tense="Future"><span class="kw-fut">Will</span> you...?</td>
               </tr>
-
+              <!-- Group 3: He / She / It -->
               <tr id="matrix-row-7" class="group-start row-aff" data-subject="He" data-type="บอกเล่า">
                 <td class="row-num">7</td><td class="subj-cell" rowspan="3">He / She / It<small>(เอกพจน์)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
                 <td class="td-pres" data-tense="Present"><span class="kw-pres">is / does</span><br><span class="v-tag" style="border-color:#16a34a;color:#15803d;">V.1 เติม s/es</span></td>
@@ -378,7 +344,7 @@
                 <td class="td-past" data-tense="Past"><span class="kw-past">Did</span> he...? / <span class="kw-past">Was</span> he...?</td>
                 <td class="td-fut" data-tense="Future"><span class="kw-fut">Will</span> he...?</td>
               </tr>
-
+              <!-- Group 4: We / They -->
               <tr id="matrix-row-10" class="group-start row-aff" data-subject="We" data-type="บอกเล่า">
                 <td class="row-num">10</td><td class="subj-cell" rowspan="3">We / They<small>(พหูพจน์)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
                 <td class="td-pres" data-tense="Present"><span class="kw-pres">are / do</span><br><span class="v-tag">V.1 ไม่เติม s</span></td>
@@ -401,91 +367,15 @@
           </table>
         </div>
       </div>
-
-      <!-- 3 กล่องคัมภีร์เสริมด้านล่าง -->
-      <div class="extra-cards-grid">
-        <div class="card-shortcut">
-          <div class="card-shortcut-header">💡 3 ข้อจำง่าย (Shortcut)</div>
-          <div class="shortcut-list">
-            <div class="shortcut-item">
-              <div class="num-circle num-1">1</div>
-              <div><strong>ปฏิเสธหรือคำถามด้วย do, does, did, will:</strong><br>กริยาแท้ใช้รูปธรรมดา (V.base) เสมอ ไม่ต้องเติม s และไม่ต้องเป็น V.2</div>
-            </div>
-            <div class="shortcut-item">
-              <div class="num-circle num-2">2</div>
-              <div><strong>อนาคต (Future):</strong> ประธานทุกตัวใช้<br>will / won't เหมือนกันหมด</div>
-            </div>
-            <div class="shortcut-item">
-              <div class="num-circle num-3">3</div>
-              <div><strong>อดีต (Past):</strong> กริยาทั่วไปใช้ did / V.2 เหมือนกันหมด มีแค่กลุ่ม was / were ที่แยกตามประธาน</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card-tense">
-          <div class="card-tense-header">โครงสร้างหลักในแต่ละ Tense</div>
-          <div class="tense-rows">
-            <div class="tense-row">
-              <div class="tense-pill pres">🕒 ปัจจุบัน<br><small>(Present)</small></div>
-              <div class="tense-detail pres-bg">
-                <strong>บอกเล่า:</strong> am / is / are / do / does + V.1<br>
-                <strong>ปฏิเสธ:</strong> am not / isn't / aren't / don't / doesn't<br>
-                <strong>คำถาม:</strong> Am/Is/Are ...? / Do/Does ...?
-              </div>
-            </div>
-            <div class="tense-row">
-              <div class="tense-pill past">📅 อดีต<br><small>(Past)</small></div>
-              <div class="tense-detail past-bg">
-                <strong>บอกเล่า:</strong> was / were / did + V.2<br>
-                <strong>ปฏิเสธ:</strong> wasn't / weren't / didn't<br>
-                <strong>คำถาม:</strong> Was/Were ...? / Did ...?
-              </div>
-            </div>
-            <div class="tense-row">
-              <div class="tense-pill fut">⏩ อนาคต<br><small>(Future)</small></div>
-              <div class="tense-detail fut-bg">
-                <strong>บอกเล่า:</strong> will + V.ธรรมดา<br>
-                <strong>ปฏิเสธ:</strong> won't + V.ธรรมดา<br>
-                <strong>คำถาม:</strong> Will ...?
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card-wh">
-          <div class="card-wh-header">
-            <div class="title">❓ คำถามแบบ Wh- Question</div>
-            <div class="subtitle">นำคำถามวางไว้หน้าประโยค ตามโครงสร้างในตาราง</div>
-          </div>
-          <table class="wh-table">
-            <tbody>
-              <tr><td>What</td><td>อะไร</td><td>What do you like?</td></tr>
-              <tr><td>Where</td><td>ที่ไหน</td><td>Where do you live?</td></tr>
-              <tr><td>When</td><td>เมื่อไหร่</td><td>When will you come?</td></tr>
-              <tr><td>Why</td><td>ทำไม</td><td>Why did he leave?</td></tr>
-              <tr><td>How</td><td>อย่างไร</td><td>How are you?</td></tr>
-              <tr><td>Who</td><td>ใคร</td><td>Who is she?</td></tr>
-              <tr><td>Which</td><td>อันไหน</td><td>Which one do you want?</td></tr>
-              <tr><td>Whose</td><td>ของใคร</td><td>Whose book is this?</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
     </div>
   </div>
 
 </div>
 
 <script>
+  // ค่าการเชื่อมต่อ Supabase
   const SUPABASE_URL = 'https://cbdqxxsvnxklmoaesgec.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiZHF4eHN2bnhrbG1vYWVzZ2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2ODA3NDMsImV4cCI6MjEwODI1Njc0M30.TiR4pL-w3pe4ay0yaTktq1nu2EuYqLvFoUSNk5Ye6BY';
-
-  const fallbackQuestions = [
-    { subject_group: 'I (ฉัน)', sentence_type: 'ปฏิเสธ', tense: 'Past', prompt_sentence: 'I ___ (not / eat) breakfast yesterday.', correct_answer: "didn't eat", options: ["don't eat", "didn't eat", "didn't ate", "wasn't eat"], shortcut_hint: 'เมื่อปฏิเสธด้วย did กริยาแท้จะถูกล้างค่ากลับเป็นรูปธรรมดา (V.base) เสมอ' },
-    { subject_group: 'He / She / It (เอกพจน์)', sentence_type: 'บอกเล่า', tense: 'Present', prompt_sentence: 'She ___ (work) at the bank every day.', correct_answer: 'works', options: ['work', 'works', 'is work', 'working'], shortcut_hint: 'ประธานเอกพจน์ (He/She/It) บอกเล่า ปัจจุบัน กริยาช่อง 1 ต้องเติม s/es' },
-    { subject_group: 'He / She / It (เอกพจน์)', sentence_type: 'คำถาม', tense: 'Present', prompt_sentence: '___ he ___ (understand) the rule?', correct_answer: 'Does / understand', options: ['Do / understand', 'Does / understands', 'Does / understand', 'Is / understand'], shortcut_hint: 'เมื่อถามด้วย Does กริยาแท้จะถูกล้างค่ากลับเป็น V.base ไม่ต้องเติม s' },
-    { subject_group: 'We / They (พหูพจน์)', sentence_type: 'ปฏิเสธ', tense: 'Future', prompt_sentence: 'They ___ (not / join) the meeting tomorrow.', correct_answer: "won't join", options: ["don't join", "didn't join", "won't join", "won't joins"], shortcut_hint: 'อนาคต (Future) ประธานทุกตัวใช้ will / won\'t + V.ธรรมดา เหมือนกันหมด' }
-  ];
 
   const MATRIX_ROWS_CONFIG = [
     { row: 1, key: 'I|บอกเล่า', label: 'แถว 1: I (ฉัน) • บอกเล่า' },
@@ -511,13 +401,10 @@
   let currentQ = null;
   let score = 0;
   let hasFailedCurrentQ = false;
-
   let showTableReference = true;
   let autoPlayTTS = false;
-
   let sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // โหลดรายชื่อผู้ใช้จาก localStorage เมื่อเปิดหน้าเว็บ
   window.addEventListener('DOMContentLoaded', () => {
     loadRecentUsersDropdown();
   });
@@ -526,11 +413,9 @@
     const savedUsers = JSON.parse(localStorage.getItem('grammar_recent_users') || '[]');
     const select = document.getElementById('recent-user-select');
     const container = document.getElementById('recent-login-container');
-    const divider = document.getElementById('name-divider');
-
+    
     if (savedUsers.length > 0) {
       container.style.display = 'block';
-      divider.style.display = 'flex';
       select.innerHTML = '<option value="">-- เลือกบัญชีเดิมที่มีประวัติ --</option>';
       savedUsers.forEach(user => {
         const opt = document.createElement('option');
@@ -557,29 +442,36 @@
 
   function loginWithName() {
     const name = document.getElementById('username-input').value.trim();
-    if (!name) {
-      alert('กรุณากรอกชื่อผู้ใช้งานก่อนครับ');
-      return;
-    }
+    if (!name) { alert('กรุณากรอกชื่อผู้ใช้งานก่อนครับ'); return; }
     currentUser = name;
     loginType = 'พิมพ์ชื่อ';
     saveUserToLocalStorage(name);
     startAppSession();
   }
 
-  function loginWithGoogle() {
-    // จำลองการ Login ด้วย Google Account (สามารถปรับแต่งเชื่อม Supabase Auth ได้ในอนาคต)
-    const googleName = prompt('Google Account Detected. กรุณายืนยันชื่อที่ต้องการแสดงผล:', 'Google User');
-    if (!googleName) return;
-    currentUser = googleName;
-    loginType = 'Google Account';
-    saveUserToLocalStorage(googleName);
-    startAppSession();
+  // ฟังก์ชันรองรับ Google Identity Services (GIS) Callback
+  function handleGoogleLogin(response) {
+    try {
+      // Decode JWT Payload เพื่อดึงชื่อและอีเมลผู้ใช้
+      const base64Url = response.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      const payload = JSON.parse(jsonPayload);
+      
+      currentUser = payload.name || payload.email;
+      loginType = 'Google OAuth';
+      saveUserToLocalStorage(currentUser);
+      startAppSession();
+    } catch (error) {
+      console.error("Google Auth Decode Error:", error);
+      alert("เกิดข้อผิดพลาดในการถอดรหัส Google Profile");
+    }
   }
 
   function logout() {
     currentUser = null;
-    loginType = null;
     document.getElementById('app-main').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('username-input').value = '';
@@ -595,8 +487,6 @@
     const { data, error } = await sbClient.from('grammar_questions').select('*');
     if (!error && data && data.length > 0) {
       allQuestions = data;
-    } else {
-      allQuestions = fallbackQuestions;
     }
     await fetchPracticeLogs();
     applyFiltersAndRestart();
@@ -606,7 +496,7 @@
     const { data, error } = await sbClient
       .from('practice_logs')
       .select('*')
-      .eq('subject_group', currentUser); // กรองตามชื่อผู้ใช้งานปัจจุบัน
+      .eq('username', currentUser); // โหลดประวัติเฉพาะของ User นี้
     if (!error && data) {
       practiceLogs = data;
     }
@@ -632,9 +522,7 @@
   function buildFullEnglishSentence(prompt, answer) {
     let text = prompt;
     const parts = answer.split('/').map(s => s.trim());
-    parts.forEach(part => {
-      text = text.replace('___', part);
-    });
+    parts.forEach(part => { text = text.replace('___', part); });
     text = text.replace(/\s*\([^)]*\)/g, '');
     return text.replace(/\s+/g, ' ').trim();
   }
@@ -653,17 +541,12 @@
     const btn = document.getElementById('btn-toggle-ref');
     const badgeRef = document.getElementById('b-row-ref');
     const bannerNote = document.getElementById('banner-ref-note');
-
     if (showTableReference) {
-      btn.classList.add('active');
-      btn.innerText = '🎯 อ้างอิงตาราง: เปิด';
-      badgeRef.style.display = 'inline-block';
-      bannerNote.style.display = 'inline-block';
+      btn.classList.add('active'); btn.innerText = '🎯 อ้างอิงตาราง: เปิด';
+      badgeRef.style.display = 'inline-block'; bannerNote.style.display = 'inline-block';
     } else {
-      btn.classList.remove('active');
-      btn.innerText = '🎯 อ้างอิงตาราง: ปิด';
-      badgeRef.style.display = 'none';
-      bannerNote.style.display = 'none';
+      btn.classList.remove('active'); btn.innerText = '🎯 อ้างอิงตาราง: ปิด';
+      badgeRef.style.display = 'none'; bannerNote.style.display = 'none';
     }
     highlightCurrentMatrixRow();
   }
@@ -672,36 +555,25 @@
     autoPlayTTS = !autoPlayTTS;
     const btn = document.getElementById('btn-toggle-tts');
     if (autoPlayTTS) {
-      btn.classList.add('active');
-      btn.innerText = '🔊 อ่านอัตโนมัติ: เปิด';
+      btn.classList.add('active'); btn.innerText = '🔊 อ่านอัตโนมัติ: เปิด';
     } else {
-      btn.classList.remove('active');
-      btn.innerText = '🔇 อ่านอัตโนมัติ: ปิด';
+      btn.classList.remove('active'); btn.innerText = '🔇 อ่านอัตโนมัติ: ปิด';
     }
   }
 
   function highlightCurrentMatrixRow() {
     document.querySelectorAll('.main-table tr').forEach(tr => tr.classList.remove('active-grammar-row'));
     document.querySelectorAll('.main-table td').forEach(td => td.classList.remove('active-grammar-cell'));
-
     if (!currentQ) return;
-
-    let sKey = 'I';
-    if (currentQ.subject_group.startsWith('You')) sKey = 'You';
-    else if (currentQ.subject_group.startsWith('He')) sKey = 'He';
-    else if (currentQ.subject_group.startsWith('We')) sKey = 'We';
-
+    const sKey = normalizeSubjectKey(currentQ.subject_group);
     const targetRow = document.querySelector(`tr[data-subject="${sKey}"][data-type="${currentQ.sentence_type}"]`);
     if (targetRow) {
       const rowNum = targetRow.querySelector('.row-num').innerText;
       document.getElementById('b-row-ref').innerText = `🎯 อ้างอิงตารางแถวที่ ${rowNum}`;
-
       if (showTableReference) {
         targetRow.classList.add('active-grammar-row');
         const targetCell = targetRow.querySelector(`td[data-tense="${currentQ.tense}"]`);
-        if (targetCell) {
-          targetCell.classList.add('active-grammar-cell');
-        }
+        if (targetCell) targetCell.classList.add('active-grammar-cell');
       }
     }
   }
@@ -712,15 +584,13 @@
     const typeFilter = document.getElementById('filter-type').value;
     const tenseFilter = document.getElementById('filter-tense').value;
 
-    if (mode === 'mistakes') {
-      await fetchPracticeLogs();
-    }
+    if (mode === 'mistakes') await fetchPracticeLogs();
 
     const mistakeCombos = new Set();
     practiceLogs.forEach(log => {
       if (log.is_correct === false) {
-        const sKey = normalizeSubjectKey(log.prompt_sentence); // หรือปรับตามฟิลด์
-        mistakeCombos.add(`${log.subject_group}|${log.sentence_type}|${log.tense}`);
+        const sKey = normalizeSubjectKey(log.subject_group);
+        mistakeCombos.add(`${sKey}|${log.sentence_type}|${log.tense}`);
       }
     });
 
@@ -730,7 +600,7 @@
       if (typeFilter !== 'all' && q.sentence_type !== typeFilter) return false;
       if (tenseFilter !== 'all' && q.tense !== tenseFilter) return false;
       if (mode === 'mistakes') {
-        const comboKey = `${q.subject_group}|${q.sentence_type}|${q.tense}`;
+        const comboKey = `${sKey}|${q.sentence_type}|${q.tense}`;
         if (!mistakeCombos.has(comboKey)) return false;
       }
       return true;
@@ -745,47 +615,40 @@
 
   function renderCurrentQuestion() {
     const fb = document.getElementById('feedback-box');
-    fb.className = 'feedback';
-    fb.innerHTML = '';
-
+    fb.className = 'feedback'; fb.innerHTML = '';
+    
     if (questionQueue.length === 0) {
       currentQ = null;
       highlightCurrentMatrixRow();
       document.getElementById('q-progress').innerText = `0 / 0`;
-      document.getElementById('question-text').innerHTML = `✨ ไม่พบโจทย์ในหมวดที่เลือก (หรือคุณยังไม่เคยตอบผิดในหมวดนี้เลย!)`;
+      document.getElementById('question-text').innerHTML = `✨ ไม่พบโจทย์ในหมวดที่เลือก (หรือคุณยังไม่เคยตอบผิดเลย!)`;
       document.getElementById('options-container').innerHTML = `<button class="opt-btn" style="grid-column: 1 / -1; background:#2563eb; color:white; border:none;" onclick="document.getElementById('filter-mode').value='all';applyFiltersAndRestart();">🔄 กลับไปโหมดฝึกทั้งหมด</button>`;
       return;
     }
 
     if (currentIndex >= questionQueue.length) {
       document.getElementById('q-progress').innerText = `${questionQueue.length} / ${questionQueue.length}`;
-      document.getElementById('question-text').innerHTML = `🎉 จบรอบการฝึกแล้ว!<br><span style="font-size:1.05rem;font-weight:500;"> Score ส่วนบุคคลที่คุณทำได้รอบนี้: <strong>${score}</strong> จาก <strong>${questionQueue.length}</strong> ข้อ</span>`;
+      document.getElementById('question-text').innerHTML = `🎉 จบการฝึกชุดนี้!<br><span style="font-size:1.05rem;font-weight:500;"> Score รอบนี้ของคุณ: <strong>${score}</strong> จาก <strong>${questionQueue.length}</strong> ข้อ</span>`;
       document.getElementById('options-container').innerHTML = `<button class="opt-btn" style="grid-column: 1 / -1; background:#2563eb; color:white; border:none;" onclick="applyFiltersAndRestart()">🔄 เริ่มเล่นรอบใหม่</button>`;
       return;
     }
 
     currentQ = questionQueue[currentIndex];
     hasFailedCurrentQ = false;
-
     document.getElementById('q-progress').innerText = `${currentIndex + 1} / ${questionQueue.length}`;
     document.getElementById('b-subject').innerText = `ประธาน: ${currentQ.subject_group}`;
     document.getElementById('b-type').innerText = `บริบท: ${currentQ.sentence_type}`;
-    
-    const tenseBadge = document.getElementById('b-tense');
-    tenseBadge.innerText = `กาล: ${currentQ.tense}`;
-    tenseBadge.className = `badge ${currentQ.tense.toLowerCase()}`;
-
+    document.getElementById('b-tense').innerText = `กาล: ${currentQ.tense}`;
+    document.getElementById('b-tense').className = `badge ${currentQ.tense.toLowerCase()}`;
     document.getElementById('question-text').innerText = currentQ.prompt_sentence;
 
     highlightCurrentMatrixRow();
 
     const container = document.getElementById('options-container');
     container.innerHTML = '';
-
     currentQ.options.forEach(opt => {
       const btn = document.createElement('button');
-      btn.className = 'opt-btn';
-      btn.innerText = opt;
+      btn.className = 'opt-btn'; btn.innerText = opt;
       btn.onclick = () => checkAnswer(opt, btn);
       container.appendChild(btn);
     });
@@ -798,45 +661,34 @@
     if (isCorrect) {
       btnElement.classList.add('correct-choice');
       btnElement.innerText = `✅ ${selected}`;
-
-      const allBtns = document.querySelectorAll('#options-container .opt-btn');
-      allBtns.forEach(b => b.disabled = true);
+      document.querySelectorAll('#options-container .opt-btn').forEach(b => b.disabled = true);
 
       if (!hasFailedCurrentQ) {
-        score++;
-        document.getElementById('score').innerText = score;
+        score++; document.getElementById('score').innerText = score;
       }
-
       const fullSentence = buildFullEnglishSentence(currentQ.prompt_sentence, currentQ.correct_answer);
       const escapedSentence = fullSentence.replace(/'/g, "\\'");
-
-      if (autoPlayTTS) {
-        speakSentence(fullSentence);
-      }
+      if (autoPlayTTS) speakSentence(fullSentence);
 
       fb.className = 'feedback correct';
-      fb.innerHTML = `
-        <div>✅ <strong>ถูกต้อง!</strong> (${currentQ.shortcut_hint})</div>
+      fb.innerHTML = `<div>✅ <strong>ถูกต้อง!</strong> (${currentQ.shortcut_hint})</div>
         <div class="full-sentence-box">
           <span>🗣️ <strong>"${fullSentence}"</strong></span>
           <button class="tts-btn" onclick="speakSentence('${escapedSentence}')">🔊 ฟังเสียงอ่าน</button>
         </div>
-        <div class="action-row">
-          <button class="next-btn" onclick="goNext()">ข้อต่อไป ➡️</button>
-        </div>`;
+        <div class="action-row"><button class="next-btn" onclick="goNext()">ข้อต่อไป ➡️</button></div>`;
     } else {
       hasFailedCurrentQ = true;
       btnElement.classList.add('wrong-choice');
       btnElement.disabled = true;
       btnElement.innerText = `❌ ${selected}`;
-
       fb.className = 'feedback wrong';
-      fb.innerHTML = `❌ <strong>"${selected}" ยังไม่ถูก!</strong> ลองดูคำใบ้แล้วเลือกใหม่ได้เลย:<br>
-        💡 <em>Shortcut: ${currentQ.shortcut_hint}</em>`;
+      fb.innerHTML = `❌ <strong>"${selected}" ยังไม่ถูก!</strong> ลองดูคำใบ้แล้วเลือกใหม่ได้เลย:<br>💡 <em>Shortcut: ${currentQ.shortcut_hint}</em>`;
     }
 
     const newLog = {
-      subject_group: currentUser, // บันทึกชื่อผู้ใช้เป็นเจ้าของ Log นี้
+      username: currentUser, // บันทึกผูกกับ User 
+      subject_group: currentQ.subject_group, // บันทึกประธานประโยคที่ทำ
       sentence_type: currentQ.sentence_type,
       tense: currentQ.tense,
       is_correct: isCorrect
@@ -854,23 +706,22 @@
     renderCurrentQuestion();
   }
 
-  // ฟังก์ชันล้างประวัติสถิติ (Reset Logs) บนหน้าเว็บและ Supabase ตามคำขอ
   async function resetUserLogs() {
-    if (!confirm(`คุณต้องการล้างประวัติสถิติทั้งหมดของ "${currentUser}" ใช่หรือไม่?`)) return;
-
-    // ลบข้อมูลใน Supabase เฉพาะของ User นี้
+    if (!confirm(`คุณต้องการล้างประวัติสถิติและการตอบผิดทั้งหมดของ "${currentUser}" ใช่หรือไม่? (ไม่สามารถกู้คืนได้)`)) return;
+    
+    // ลบข้อมูลบน Supabase เฉพาะของ Username นี้
     const { error } = await sbClient
       .from('practice_logs')
       .delete()
-      .eq('subject_group', currentUser);
-
+      .eq('username', currentUser);
+      
     if (error) {
       alert('เกิดข้อผิดพลาดในการล้างสถิติ: ' + error.message);
       return;
     }
-
+    
     practiceLogs = [];
-    alert('ล้างประวัติสถิติเรียบร้อยแล้ว เริ่มต้นเก็บสถิติรอบใหม่ได้เลยครับ!');
+    alert(`ล้างประวัติสถิติของ ${currentUser} เรียบร้อยแล้ว เริ่มต้นเก็บสถิติรอบใหม่ได้เลยครับ!`);
     applyFiltersAndRestart();
     if (document.getElementById('dashboard-panel').style.display === 'block') {
       renderDashboardUI();
@@ -881,9 +732,7 @@
     const panel = document.getElementById('dashboard-panel');
     const isOpening = panel.style.display !== 'block';
     panel.style.display = isOpening ? 'block' : 'none';
-    if (isOpening) {
-      await loadDashboardStats();
-    }
+    if (isOpening) await loadDashboardStats();
   }
 
   async function loadDashboardStats() {
@@ -894,31 +743,32 @@
 
   function renderDashboardUI() {
     const statsMap = {};
-    MATRIX_ROWS_CONFIG.forEach(item => {
-      statsMap[item.key] = { correct: 0, total: 0 };
-    });
+    MATRIX_ROWS_CONFIG.forEach(item => { statsMap[item.key] = { correct: 0, total: 0 }; });
 
-    let grandTotal = 0;
-    let grandCorrect = 0;
-
+    let grandTotal = 0; let grandCorrect = 0;
     const historyListEl = document.getElementById('history-list');
     historyListEl.innerHTML = '';
 
     if (practiceLogs.length === 0) {
-      historyListEl.innerHTML = `<span style="font-size:0.82rem; color:#64748b;">ยังไม่มีประวัติการทำรายการ</span>`;
+      historyListEl.innerHTML = `<span style="font-size:0.82rem; color:#64748b;">ยังไม่มีประวัติการทำรายการ (ลองเริ่มฝึกทำโจทย์สักข้อดูครับ)</span>`;
     }
 
     practiceLogs.slice().reverse().forEach((log, index) => {
       grandTotal++;
       if (log.is_correct) grandCorrect++;
+      
+      const sKey = normalizeSubjectKey(log.subject_group);
+      const rowKey = `${sKey}|${log.sentence_type}`;
+      if (statsMap[rowKey]) {
+        statsMap[rowKey].total++;
+        if (log.is_correct) statsMap[rowKey].correct++;
+      }
 
-      if (index < 15) { // แสดงประวัติ 15 รายการล่าสุด
+      if (index < 15) {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'history-item';
-        itemDiv.innerHTML = `
-          <span>บริบท: ${log.sentence_type} | Tense: ${log.tense}</span>
-          <span style="font-weight:700; color:${log.is_correct ? '#15803d' : '#b91c1c'}">${log.is_correct ? '✅ ถูกต้อง' : '❌ ตอบผิด'}</span>
-        `;
+        itemDiv.innerHTML = `<span>ประธาน: ${sKey} | ${log.sentence_type} | ${log.tense}</span>
+          <span style="font-weight:700; color:${log.is_correct ? '#15803d' : '#b91c1c'}">${log.is_correct ? '✅ ถูกต้อง' : '❌ ตอบผิด'}</span>`;
         historyListEl.appendChild(itemDiv);
       }
     });
@@ -927,7 +777,7 @@
     document.getElementById('dash-summary').innerHTML = `
       <div>👤 ผู้ใช้งาน: <strong>${currentUser}</strong></div>
       <div>📝 ทำโจทย์รวม: <strong>${grandTotal}</strong> ครั้ง</div>
-      <div>✅ Score ส่วนบุคคล (ถูก): <strong>${grandCorrect}</strong> ข้อ</div>
+      <div>✅ Score ส่วนบุคคล (ถูกครั้งแรก): <strong>${grandCorrect}</strong> ข้อ</div>
       <div>🎯 ความแม่นยำรวม: <strong>${overallPct}%</strong></div>
     `;
 
@@ -937,25 +787,17 @@
     MATRIX_ROWS_CONFIG.forEach(item => {
       const st = statsMap[item.key];
       const pct = (st && st.total > 0) ? Math.round((st.correct / st.total) * 100) : null;
-      
       let barColor = '#94a3b8';
       if (pct !== null) {
         if (pct >= 80) barColor = '#16a34a';
         else if (pct >= 50) barColor = '#eab308';
         else barColor = '#dc2626';
       }
-
       const card = document.createElement('div');
       card.className = 'dash-row-card';
-      card.innerHTML = `
-        <div class="dash-row-top">
-          <span>${item.label}</span>
-          <span style="color:${barColor};">${pct !== null ? `${pct}% (${st.correct}/${st.total})` : 'ยังไม่เคยฝึก'}</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" style="width:${pct !== null ? pct : 0}%; background:${barColor};"></div>
-        </div>
-      `;
+      card.innerHTML = `<div class="dash-row-top"><span>${item.label}</span>
+          <span style="color:${barColor};">${pct !== null ? `${pct}% (${st.correct}/${st.total})` : 'ยังไม่เคยฝึก'}</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:${pct !== null ? pct : 0}%; background:${barColor};"></div></div>`;
       grid.appendChild(card);
     });
   }
@@ -968,9 +810,7 @@
       highlightCurrentMatrixRow();
       if (showTableReference) {
         const activeRow = document.querySelector('.active-grammar-row');
-        if (activeRow) {
-          activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        if (activeRow) activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
   }
