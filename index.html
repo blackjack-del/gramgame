@@ -149,7 +149,6 @@
       <h2>🔐 เข้าสู่ระบบฝึกแกรมม่า</h2>
       <p style="font-size:0.85rem; color:#64748b; margin-top:-5px; margin-bottom: 5px;">เลือกวิธีเข้าใช้งานเพื่อบันทึก Score ส่วนบุคคล</p>
       
-      <!-- Google Login -->
       <div id="g_id_onload"
            data-client_id="909370785324-2ahrlcm621cssss32hdn27o64su7g5e3.apps.googleusercontent.com" 
            data-context="signin" data-ux_mode="popup" data-callback="handleGoogleLogin" data-auto_prompt="false">
@@ -158,7 +157,6 @@
 
       <div class="divider">หรือ พิมพ์ชื่อเข้าใช้งาน (Local)</div>
 
-      <!-- รายชื่อที่เคยพิมพ์ (ซ่อน Google) -->
       <div id="recent-login-container" style="display:none; text-align:left; width:100%;">
         <label style="font-size:0.8rem; font-weight:700; color:#475569;">บัญชีที่เคยใช้งานล่าสุด:</label>
         <select id="recent-user-select" class="login-select" style="margin-top:4px;" onchange="selectRecentUser(this.value)">
@@ -174,7 +172,6 @@
     </div>
   </div>
 
-  <!-- แอปหลัก -->
   <div id="app-main">
     <div class="user-bar">
       <div>👤 ผู้ใช้งาน: <strong id="display-user-name">-</strong> (<span id="display-login-type">-</span>)</div>
@@ -259,7 +256,6 @@
       <div class="feedback" id="feedback-box"></div>
     </div>
 
-    <!-- หน้า Dashboard -->
     <div class="dashboard-panel" id="dashboard-panel">
       <div class="dashboard-header">
         <h3 id="dash-title">📊 Score ส่วนบุคคล</h3>
@@ -392,11 +388,8 @@
     { row: 10, key: 'We|บอกเล่า', label: 'แถว 10: We/They • บอกเล่า' }, { row: 11, key: 'We|ปฏิเสธ', label: 'แถว 11: We/They • ปฏิเสธ' }, { row: 12, key: 'We|คำถาม', label: 'แถว 12: We/They • คำถาม' }
   ];
 
-  // ==========================================
-  // การจัดการตัวตนผู้ใช้งาน (แยก Database ID และ Display Name อย่างชัดเจน)
-  // ==========================================
-  let currentUser = null; // ID ที่ใช้บันทึกลง Database (Local: "ชื่อ", Google: "google:อีเมล")
-  let displayUserName = null; // ชื่อสวยๆ ที่โชว์บนหน้าจอ
+  let currentUser = null;
+  let displayUserName = null;
   let loginType = null;
   
   let allQuestions = [];
@@ -443,12 +436,11 @@
     const name = document.getElementById('username-input').value.trim();
     if (!name) { alert('กรุณากรอกชื่อก่อนครับ'); return; }
     
-    // ตั้งค่าตัวตนสำหรับ Local User
     currentUser = name; 
     displayUserName = name;
     loginType = 'พิมพ์ชื่อ';
     
-    saveUserToLocalStorage(name); // บันทึกเฉพาะชื่อ Local ลง Dropdown
+    saveUserToLocalStorage(name);
     startAppSession();
   }
 
@@ -458,45 +450,61 @@
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const payload = JSON.parse(decodeURIComponent(window.atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
       
-      // ตั้งค่าตัวตนสำหรับ Google User ให้ ID ไม่ซ้ำกับคนพิมพ์ชื่อ
       currentUser = "google:" + payload.email; 
       displayUserName = payload.name || payload.email;
       loginType = 'Google OAuth';
-      
-      // ผู้ใช้ Google ไม่ถูกบันทึกลง Dropdown
       startAppSession();
     } catch (error) {
       console.error("Google Auth Error:", error); alert("เกิดข้อผิดพลาดในการถอดรหัส Google Profile");
     }
   }
 
+  // ==========================================
+  // เคลียร์ค่าทั้งหมดให้เกลี้ยงก่อนเปลี่ยน User 
+  // ==========================================
   function clearLocalGameState() {
-    practiceLogs = []; questionQueue = []; score = 0; currentIndex = 0; currentQ = null;
+    practiceLogs = []; 
+    questionQueue = []; 
+    score = 0; 
+    currentIndex = 0; 
+    currentQ = null;
+    
+    // เคลียร์ UI ในหน้า Dashboard และตัวเลข
     document.getElementById('score').innerText = '0';
     document.getElementById('q-progress').innerText = '1 / 1';
     document.getElementById('history-list').innerHTML = '';
-    document.getElementById('dash-summary').innerHTML = 'กำลังคำนวณสถิติ...';
+    document.getElementById('dash-summary').innerHTML = 'กำลังโหลด...';
+    document.getElementById('dash-grid').innerHTML = '';
+    
+    // เคลียร์ตัวเลือกคำถามและข้อความ feedback ในหน้าเกม
+    document.getElementById('options-container').innerHTML = '';
+    document.getElementById('feedback-box').className = 'feedback';
+    document.getElementById('feedback-box').innerHTML = '';
+    document.getElementById('question-text').innerText = 'กำลังโหลดโจทย์...';
+    
+    // ปิดหน้า Dashboard เสมอตอนล็อกเอาท์
+    document.getElementById('dashboard-panel').style.display = 'none';
   }
 
   function logout() {
+    clearLocalGameState(); // ล้าง Memory & UI ทันที
     currentUser = null; 
     displayUserName = null;
     loginType = null;
-    clearLocalGameState();
+    
     document.getElementById('app-main').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('username-input').value = '';
+    
     loadRecentUsersDropdown();
   }
 
   async function deleteProfile() {
     if (!confirm(`⚠️ คุณต้องการลบโปรไฟล์ "${displayUserName}" และล้างข้อมูลสถิติทั้งหมดใช่หรือไม่? (กู้คืนไม่ได้)`)) return;
     
-    // ลบข้อมูลบนฐานข้อมูล
     const { error } = await sbClient.from('practice_logs').delete().eq('username', currentUser);
     if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); return; }
     
-    // ลบออกจาก Dropdown (เฉพาะ Local User)
     if (loginType === 'พิมพ์ชื่อ') {
         let savedUsers = JSON.parse(localStorage.getItem('grammar_recent_users') || '[]');
         if(savedUsers.includes(currentUser)){
@@ -515,10 +523,20 @@
     const { error } = await sbClient.from('practice_logs').delete().eq('username', currentUser);
     if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); return; }
     
-    practiceLogs = []; score = 0; document.getElementById('score').innerText = '0';
+    // รีเซ็ตตัวแปรคะแนนทันที
+    practiceLogs = []; 
+    score = 0; 
+    document.getElementById('score').innerText = '0';
+    
     alert(`รีเซ็ตคะแนนของ ${displayUserName} เรียบร้อยแล้ว!`);
+    
+    // โหลดหน้าโจทย์ใหม่
     applyFiltersAndRestart();
-    if (document.getElementById('dashboard-panel').style.display === 'block') renderDashboardUI();
+    
+    // ถ้าหน้า Dashboard เปิดอยู่ ให้อัปเดตกราฟใหม่ทันที
+    if (document.getElementById('dashboard-panel').style.display === 'block') {
+         renderDashboardUI();
+    }
   }
 
   function toggleFilterPanel() {
@@ -532,11 +550,10 @@
   async function startAppSession() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-main').style.display = 'block';
-    
-    // โชว์ Display Name บนหน้าจอ
     document.getElementById('display-user-name').innerText = displayUserName;
     document.getElementById('display-login-type').innerText = loginType;
     
+    // เมคชัวร์ว่าค่าถูกเคลียร์แล้วก่อนเริ่มดึงของคนใหม่
     clearLocalGameState();
 
     const { data, error } = await sbClient.from('grammar_questions').select('*');
@@ -653,7 +670,9 @@
     });
 
     questionQueue = shuffleArray(filtered);
-    currentIndex = 0; score = 0; document.getElementById('score').innerText = score;
+    currentIndex = 0; 
+    score = 0; 
+    document.getElementById('score').innerText = score;
     renderCurrentQuestion();
   }
 
@@ -735,7 +754,7 @@
     }
 
     const newLog = {
-      username: currentUser, // บันทึก ID ฐานข้อมูล (ที่แยกกันแล้ว)
+      username: currentUser,
       subject_group: currentQ.subject_group,
       sentence_type: currentQ.sentence_type,
       tense: currentQ.tense,
@@ -758,7 +777,7 @@
 
   async function loadDashboardStats() {
     document.getElementById('dash-summary').innerText = 'กำลังดึงข้อมูล...';
-    await fetchPracticeLogs();
+    await fetchPracticeLogs(); // ดึงประวัติเฉพาะคนนี้ใหม่ล่าสุด
     renderDashboardUI();
   }
 
@@ -772,28 +791,27 @@
 
     if (practiceLogs.length === 0) {
       historyListEl.innerHTML = `<span style="font-size:0.8rem; color:#64748b;">ยังไม่มีประวัติการทำรายการ</span>`;
+    } else {
+      practiceLogs.slice().reverse().forEach((log, index) => {
+        grandTotal++; if (log.is_correct) grandCorrect++;
+        const sKey = normalizeSubjectKey(log.subject_group);
+        const rowKey = `${sKey}|${log.sentence_type}`;
+        if (statsMap[rowKey]) {
+          statsMap[rowKey].total++;
+          if (log.is_correct) statsMap[rowKey].correct++;
+        }
+        if (index < 15) {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'history-item';
+          itemDiv.innerHTML = `<span>ประธาน: ${sKey} | ${log.sentence_type} | ${log.tense}</span>
+            <span style="font-weight:700; color:${log.is_correct ? '#15803d' : '#b91c1c'}">${log.is_correct ? '✅' : '❌'}</span>`;
+          historyListEl.appendChild(itemDiv);
+        }
+      });
     }
-
-    practiceLogs.slice().reverse().forEach((log, index) => {
-      grandTotal++; if (log.is_correct) grandCorrect++;
-      const sKey = normalizeSubjectKey(log.subject_group);
-      const rowKey = `${sKey}|${log.sentence_type}`;
-      if (statsMap[rowKey]) {
-        statsMap[rowKey].total++;
-        if (log.is_correct) statsMap[rowKey].correct++;
-      }
-      if (index < 15) {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'history-item';
-        itemDiv.innerHTML = `<span>ประธาน: ${sKey} | ${log.sentence_type} | ${log.tense}</span>
-          <span style="font-weight:700; color:${log.is_correct ? '#15803d' : '#b91c1c'}">${log.is_correct ? '✅' : '❌'}</span>`;
-        historyListEl.appendChild(itemDiv);
-      }
-    });
 
     const overallPct = grandTotal > 0 ? Math.round((grandCorrect / grandTotal) * 100) : 0;
     
-    // โชว์ Display Name บน Dashboard
     document.getElementById('dash-summary').innerHTML = `
       <div>👤: <strong>${displayUserName}</strong></div>
       <div>📝 รวม: <strong>${grandTotal}</strong> ข้อ</div>
