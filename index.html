@@ -143,11 +143,13 @@
 <body>
 
 <div class="container">
+  <!-- หน้า Login Screen -->
   <div id="login-screen">
     <div class="login-box">
       <h2>🔐 เข้าสู่ระบบฝึกแกรมม่า</h2>
       <p style="font-size:0.85rem; color:#64748b; margin-top:-5px; margin-bottom: 5px;">เลือกวิธีเข้าใช้งานเพื่อบันทึก Score ส่วนบุคคล</p>
       
+      <!-- Google Login -->
       <div id="g_id_onload"
            data-client_id="909370785324-2ahrlcm621cssss32hdn27o64su7g5e3.apps.googleusercontent.com" 
            data-context="signin" data-ux_mode="popup" data-callback="handleGoogleLogin" data-auto_prompt="false">
@@ -156,6 +158,7 @@
 
       <div class="divider">หรือ พิมพ์ชื่อเข้าใช้งาน (Local)</div>
 
+      <!-- รายชื่อที่เคยพิมพ์ (ซ่อน Google) -->
       <div id="recent-login-container" style="display:none; text-align:left; width:100%;">
         <label style="font-size:0.8rem; font-weight:700; color:#475569;">บัญชีที่เคยใช้งานล่าสุด:</label>
         <select id="recent-user-select" class="login-select" style="margin-top:4px;" onchange="selectRecentUser(this.value)">
@@ -171,6 +174,7 @@
     </div>
   </div>
 
+  <!-- แอปหลัก -->
   <div id="app-main">
     <div class="user-bar">
       <div>👤 ผู้ใช้งาน: <strong id="display-user-name">-</strong> (<span id="display-login-type">-</span>)</div>
@@ -255,7 +259,7 @@
       <div class="feedback" id="feedback-box"></div>
     </div>
 
-    <!-- ปุ่มรีเซ็ตคะแนนอยู่ข้างปุ่มรีเฟรช -->
+    <!-- หน้า Dashboard -->
     <div class="dashboard-panel" id="dashboard-panel">
       <div class="dashboard-header">
         <h3 id="dash-title">📊 Score ส่วนบุคคล</h3>
@@ -388,8 +392,13 @@
     { row: 10, key: 'We|บอกเล่า', label: 'แถว 10: We/They • บอกเล่า' }, { row: 11, key: 'We|ปฏิเสธ', label: 'แถว 11: We/They • ปฏิเสธ' }, { row: 12, key: 'We|คำถาม', label: 'แถว 12: We/They • คำถาม' }
   ];
 
-  let currentUser = null;
+  // ==========================================
+  // การจัดการตัวตนผู้ใช้งาน (แยก Database ID และ Display Name อย่างชัดเจน)
+  // ==========================================
+  let currentUser = null; // ID ที่ใช้บันทึกลง Database (Local: "ชื่อ", Google: "google:อีเมล")
+  let displayUserName = null; // ชื่อสวยๆ ที่โชว์บนหน้าจอ
   let loginType = null;
+  
   let allQuestions = [];
   let practiceLogs = [];
   let questionQueue = [];
@@ -400,6 +409,7 @@
   let showTableReference = true;
   let autoPlayTTS = false;
   let isFilterPanelOpen = false;
+  
   let sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   window.addEventListener('DOMContentLoaded', () => { loadRecentUsersDropdown(); });
@@ -432,8 +442,13 @@
   function loginWithName() {
     const name = document.getElementById('username-input').value.trim();
     if (!name) { alert('กรุณากรอกชื่อก่อนครับ'); return; }
-    currentUser = name; loginType = 'พิมพ์ชื่อ';
-    saveUserToLocalStorage(name);
+    
+    // ตั้งค่าตัวตนสำหรับ Local User
+    currentUser = name; 
+    displayUserName = name;
+    loginType = 'พิมพ์ชื่อ';
+    
+    saveUserToLocalStorage(name); // บันทึกเฉพาะชื่อ Local ลง Dropdown
     startAppSession();
   }
 
@@ -441,10 +456,14 @@
     try {
       const base64Url = response.credential.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-      currentUser = payload.name || payload.email;
+      const payload = JSON.parse(decodeURIComponent(window.atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+      
+      // ตั้งค่าตัวตนสำหรับ Google User ให้ ID ไม่ซ้ำกับคนพิมพ์ชื่อ
+      currentUser = "google:" + payload.email; 
+      displayUserName = payload.name || payload.email;
       loginType = 'Google OAuth';
-      // บัญชีที่ล็อกอินผ่าน Google จะไม่ถูกบันทึกใน LocalStorage Dropdown ตามที่ร้องขอ
+      
+      // ผู้ใช้ Google ไม่ถูกบันทึกลง Dropdown
       startAppSession();
     } catch (error) {
       console.error("Google Auth Error:", error); alert("เกิดข้อผิดพลาดในการถอดรหัส Google Profile");
@@ -460,7 +479,9 @@
   }
 
   function logout() {
-    currentUser = null; loginType = null;
+    currentUser = null; 
+    displayUserName = null;
+    loginType = null;
     clearLocalGameState();
     document.getElementById('app-main').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
@@ -469,27 +490,33 @@
   }
 
   async function deleteProfile() {
-    if (!confirm(`⚠️ คุณต้องการลบโปรไฟล์ "${currentUser}" และล้างข้อมูลสถิติทั้งหมดใช่หรือไม่? (กู้คืนไม่ได้)`)) return;
+    if (!confirm(`⚠️ คุณต้องการลบโปรไฟล์ "${displayUserName}" และล้างข้อมูลสถิติทั้งหมดใช่หรือไม่? (กู้คืนไม่ได้)`)) return;
+    
+    // ลบข้อมูลบนฐานข้อมูล
     const { error } = await sbClient.from('practice_logs').delete().eq('username', currentUser);
     if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); return; }
     
-    let savedUsers = JSON.parse(localStorage.getItem('grammar_recent_users') || '[]');
-    if(savedUsers.includes(currentUser)){
-         savedUsers = savedUsers.filter(u => u !== currentUser);
-         localStorage.setItem('grammar_recent_users', JSON.stringify(savedUsers));
+    // ลบออกจาก Dropdown (เฉพาะ Local User)
+    if (loginType === 'พิมพ์ชื่อ') {
+        let savedUsers = JSON.parse(localStorage.getItem('grammar_recent_users') || '[]');
+        if(savedUsers.includes(currentUser)){
+             savedUsers = savedUsers.filter(u => u !== currentUser);
+             localStorage.setItem('grammar_recent_users', JSON.stringify(savedUsers));
+        }
     }
     
-    alert(`ลบโปรไฟล์ ${currentUser} เรียบร้อยแล้ว`);
+    alert(`ลบโปรไฟล์ ${displayUserName} เรียบร้อยแล้ว`);
     logout();
   }
 
   async function resetUserLogs() {
-    if (!confirm(`คุณต้องการล้างประวัติคะแนนของ "${currentUser}" เริ่มต้นใหม่ใช่หรือไม่?`)) return;
+    if (!confirm(`คุณต้องการล้างประวัติคะแนนของ "${displayUserName}" เริ่มต้นใหม่ใช่หรือไม่?`)) return;
+    
     const { error } = await sbClient.from('practice_logs').delete().eq('username', currentUser);
     if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); return; }
     
     practiceLogs = []; score = 0; document.getElementById('score').innerText = '0';
-    alert(`รีเซ็ตคะแนนเรียบร้อยแล้ว!`);
+    alert(`รีเซ็ตคะแนนของ ${displayUserName} เรียบร้อยแล้ว!`);
     applyFiltersAndRestart();
     if (document.getElementById('dashboard-panel').style.display === 'block') renderDashboardUI();
   }
@@ -505,7 +532,9 @@
   async function startAppSession() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-main').style.display = 'block';
-    document.getElementById('display-user-name').innerText = currentUser;
+    
+    // โชว์ Display Name บนหน้าจอ
+    document.getElementById('display-user-name').innerText = displayUserName;
     document.getElementById('display-login-type').innerText = loginType;
     
     clearLocalGameState();
@@ -661,7 +690,6 @@
     
     let optionsArray = [];
     try {
-        // จัดการกรณี options ถูกเก็บเป็น String JSON ใน Supabase (กันการลืม Parse)
         if (typeof currentQ.options === 'string') {
              optionsArray = JSON.parse(currentQ.options);
         } else {
@@ -669,7 +697,6 @@
         }
     } catch (e) {
         optionsArray = [currentQ.correct_answer];
-        console.error("Failed to parse options array:", e);
     }
 
     optionsArray.forEach(opt => {
@@ -708,7 +735,7 @@
     }
 
     const newLog = {
-      username: currentUser,
+      username: currentUser, // บันทึก ID ฐานข้อมูล (ที่แยกกันแล้ว)
       subject_group: currentQ.subject_group,
       sentence_type: currentQ.sentence_type,
       tense: currentQ.tense,
@@ -765,8 +792,10 @@
     });
 
     const overallPct = grandTotal > 0 ? Math.round((grandCorrect / grandTotal) * 100) : 0;
+    
+    // โชว์ Display Name บน Dashboard
     document.getElementById('dash-summary').innerHTML = `
-      <div>👤: <strong>${currentUser}</strong></div>
+      <div>👤: <strong>${displayUserName}</strong></div>
       <div>📝 รวม: <strong>${grandTotal}</strong> ข้อ</div>
       <div>✅ ถูก: <strong>${grandCorrect}</strong> ข้อ</div>
       <div>🎯 แม่นยำ: <strong>${overallPct}%</strong></div>
