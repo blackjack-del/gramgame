@@ -4,20 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Grammar Matrix Speed Drill</title>
-  <!-- โหลด Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- โหลดไลบรารี Google OAuth 2.0 ของจริง -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root { --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
     * { box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-    .container { max-width: 1000px; width: 100%; background: var(--card); padding: 24px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
+    .container { max-width: 1000px; width: 100%; background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
     
     /* Login Screen */
-    #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; text-align: center; gap: 20px; }
-    .login-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 30px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); align-items: center; }
-    .login-box h2 { margin: 0 0 10px; color: #0f172a; }
+    #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 10px; text-align: center; gap: 20px; }
+    .login-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 16px; padding: 24px; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.04); align-items: center; }
+    .login-box h2 { margin: 0 0 10px; color: #0f172a; font-size: 1.4rem; }
     .login-input, .login-select { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #cbd5e1; font-size: 0.95rem; background: #ffffff; }
     .btn-login { width: 100%; padding: 12px; border-radius: 10px; background: #2563eb; color: white; border: none; font-weight: 700; cursor: pointer; font-size: 1rem; transition: 0.2s; }
     .btn-login:hover { background: #1d4ed8; }
@@ -26,17 +24,21 @@
     .divider::before { margin-right: .75em; }
     .divider::after { margin-left: .75em; }
 
-    /* App Main (Hidden until login) */
     #app-main { display: none; }
 
-    /* Header & User Profile Bar */
-    .user-bar { display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 10px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 0.9rem; font-weight: 600; }
+    /* Header & User Bar */
+    .user-bar { display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 10px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 0.9rem; font-weight: 600; flex-wrap: wrap; gap: 10px; }
+    .user-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
-    .stats { display: flex; gap: 16px; font-size: 0.95rem; align-items: center; }
+    .stats { display: flex; gap: 16px; font-size: 0.95rem; align-items: center; flex-wrap: wrap; }
 
-    /* Control Panel */
-    .control-panel { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 14px; margin-bottom: 18px; display: flex; flex-direction: column; gap: 12px; }
-    .filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+    /* Control Panel (Collapsible) */
+    .control-panel { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; margin-bottom: 18px; display: flex; flex-direction: column; overflow: hidden; }
+    .cp-header { padding: 12px 16px; background: #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #334155; font-size: 0.95rem; user-select: none; }
+    .cp-header:hover { background: #e2e8f0; }
+    .cp-body { display: none; flex-direction: column; gap: 12px; padding: 14px 16px; border-top: 1px solid #cbd5e1; }
+    
+    .filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
     .filter-group { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: 700; color: #475569; }
     .filter-group select { padding: 8px 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 0.88rem; font-weight: 600; background: #ffffff; color: #1e293b; cursor: pointer; }
     .toggle-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between; border-top: 1px dashed #cbd5e1; padding-top: 10px; }
@@ -44,69 +46,67 @@
     .toggle-btn { padding: 7px 12px; border-radius: 8px; font-size: 0.83rem; font-weight: 700; border: 1.5px solid #cbd5e1; background: #ffffff; color: #475569; cursor: pointer; transition: 0.15s; display: inline-flex; align-items: center; gap: 6px; }
     .toggle-btn.active { background: #eff6ff; border-color: #2563eb; color: #1d4ed8; }
     .toggle-btn.dash-btn { background: #0f172a; color: #ffffff; border-color: #0f172a; }
-    .toggle-btn.reset-btn { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
 
-    /* Badges & Question Box */
-    .badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
-    .badge { padding: 6px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; background: #e2e8f0; }
+    /* Badges & Game Area */
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+    .badge { padding: 6px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; background: #e2e8f0; }
     .badge.present { background: #dcfce7; color: #15803d; }
     .badge.past { background: #ffedd5; color: #c2410c; }
     .badge.future { background: #ede9fe; color: #6d28d9; }
     .badge.row-ref { background: #fef08a; color: #854d0e; border: 1px solid #facc15; }
-    .question-box { font-size: 1.35rem; font-weight: 700; margin: 16px 0 20px; padding: 24px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center; }
-    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    @media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } }
+    .question-box { font-size: 1.25rem; font-weight: 700; margin: 10px 0 16px; padding: 20px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; text-align: center; line-height: 1.4; }
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    @media (max-width: 500px) { .options-grid { grid-template-columns: 1fr; } }
     
-    button.opt-btn { padding: 14px; font-size: 1rem; font-weight: 600; border: 2px solid #cbd5e1; border-radius: 10px; background: white; cursor: pointer; transition: 0.15s; color: var(--text); }
+    button.opt-btn { padding: 14px; font-size: 0.95rem; font-weight: 600; border: 2px solid #cbd5e1; border-radius: 10px; background: white; cursor: pointer; transition: 0.15s; color: var(--text); }
     button.opt-btn:hover:not(:disabled) { border-color: var(--primary); background: #eff6ff; }
     button.opt-btn.wrong-choice { background: #fee2e2 !important; border-color: #ef4444 !important; color: #b91c1c !important; cursor: not-allowed; opacity: 0.95; }
     button.opt-btn.correct-choice { background: #dcfce7 !important; border-color: #22c55e !important; color: #15803d !important; cursor: default; }
 
     /* Feedback & TTS */
-    .feedback { margin-top: 16px; padding: 16px; border-radius: 10px; display: none; font-weight: 500; line-height: 1.5; }
+    .feedback { margin-top: 16px; padding: 14px; border-radius: 10px; display: none; font-weight: 500; line-height: 1.5; font-size: 0.9rem; }
     .feedback.correct { display: block; background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
     .feedback.wrong { display: block; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
-    .full-sentence-box { margin-top: 10px; padding: 10px 14px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 1px solid #86efac; color: #0f172a; font-size: 1.05rem; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .full-sentence-box { margin-top: 10px; padding: 10px 14px; background: rgba(255,255,255,0.9); border-radius: 8px; border: 1px solid #86efac; color: #0f172a; font-size: 1rem; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
     .action-row { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
-    .tts-btn { padding: 8px 14px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
-    .next-btn { padding: 8px 18px; background: #15803d; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; }
+    .tts-btn, .next-btn { padding: 8px 14px; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
+    .tts-btn { background: #0284c7; } .next-btn { background: #15803d; }
 
     /* Dashboard & History */
     .dashboard-panel { display: none; margin-top: 20px; background: #ffffff; border: 2px solid #cbd5e1; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .dashboard-header { background: #0f172a; color: white; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .dashboard-header h3 { margin: 0; font-size: 1rem; }
-    .dashboard-body { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
-    .dash-summary { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.9rem; background: #f8fafc; padding: 12px 16px; border-radius: 10px; border: 1px solid #e2e8f0; align-items: center; justify-content: space-between; }
-    .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
-    .dash-row-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; background: #ffffff; display: flex; flex-direction: column; gap: 6px; }
-    .dash-row-top { display: flex; justify-content: space-between; font-size: 0.84rem; font-weight: 700; }
-    .progress-track { width: 100%; height: 10px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .dashboard-header { background: #0f172a; color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .dashboard-header h3 { margin: 0; font-size: 0.95rem; }
+    .dashboard-body { padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+    .dash-summary { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.85rem; background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; align-items: center; justify-content: space-between; }
+    .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; }
+    .dash-row-card { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; background: #ffffff; display: flex; flex-direction: column; gap: 6px; }
+    .dash-row-top { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 700; }
+    .progress-track { width: 100%; height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 999px; transition: width 0.3s ease; }
-    
     .history-section { border-top: 1px solid #e2e8f0; padding-top: 14px; }
     .history-list { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-    .history-item { font-size: 0.82rem; padding: 6px 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; }
+    .history-item { font-size: 0.8rem; padding: 6px 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; }
 
     /* Cheat Sheet & Table */
-    .cheat-btn { margin-top: 20px; background: linear-gradient(135deg, #1e293b, #334155); color: white; border: none; padding: 13px 18px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; font-size: 1rem; }
-    .cheat-sheet { display: none; margin-top: 22px; }
-    .main-table-card { background: #ffffff; border-radius: 16px; border: 2px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 24px; }
-    .main-table-banner { background: linear-gradient(90deg, #0f172a, #1e3a8a); color: #ffffff; padding: 12px 18px; font-weight: 800; font-size: 1.1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
-    .main-table-banner span.sub-note { font-size: 0.8rem; font-weight: 500; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 999px; color: #e0f2fe; }
-    .main-table-wrap { overflow-x: auto; padding: 4px; }
-    table.main-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem; min-width: 680px; }
-    table.main-table th { padding: 12px 10px; color: white; font-weight: 700; font-size: 0.92rem; border-right: 2px solid #ffffff; }
-    table.main-table th.th-num { background: #475569; width: 42px; }
-    table.main-table th.th-sub { background: #0d9488; width: 140px; }
-    table.main-table th.th-ctx { background: #475569; width: 95px; }
+    .cheat-btn { margin-top: 20px; background: linear-gradient(135deg, #1e293b, #334155); color: white; border: none; padding: 12px 16px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; font-size: 0.95rem; }
+    .cheat-sheet { display: none; margin-top: 20px; }
+    .main-table-card { background: #ffffff; border-radius: 14px; border: 2px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 20px; }
+    .main-table-banner { background: linear-gradient(90deg, #0f172a, #1e3a8a); color: #ffffff; padding: 10px 14px; font-weight: 800; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .main-table-banner span.sub-note { font-size: 0.75rem; font-weight: 500; background: rgba(255,255,255,0.15); padding: 4px 8px; border-radius: 999px; }
+    .main-table-wrap { overflow-x: auto; padding: 2px; }
+    table.main-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.85rem; min-width: 650px; }
+    table.main-table th { padding: 10px 8px; color: white; font-weight: 700; font-size: 0.85rem; border-right: 2px solid #ffffff; }
+    table.main-table th.th-num { background: #475569; width: 35px; }
+    table.main-table th.th-sub { background: #0d9488; width: 120px; }
+    table.main-table th.th-ctx { background: #475569; width: 85px; }
     table.main-table th.th-pres { background: #16a34a; }
     table.main-table th.th-past { background: #ea580c; }
     table.main-table th.th-fut { background: #6d28d9; border-right: none; }
-    table.main-table td { padding: 9px 10px; border: 1px solid #cbd5e1; vertical-align: middle; line-height: 1.4; transition: all 0.25s ease; }
+    table.main-table td { padding: 8px; border: 1px solid #cbd5e1; vertical-align: middle; line-height: 1.4; transition: all 0.25s ease; }
     tr.group-start td { border-top: 3px solid #334155 !important; }
-    td.row-num { font-weight: 700; color: #64748b; background: #f8fafc; font-size: 0.8rem; }
-    td.subj-cell { background: #f0fdfa; color: #0f766e; font-weight: 800; font-size: 1rem; border-right: 2px solid #99f6e4 !important; }
-    .ctx-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.78rem; font-weight: 700; width: 72px; }
+    td.row-num { font-weight: 700; color: #64748b; background: #f8fafc; font-size: 0.75rem; }
+    td.subj-cell { background: #f0fdfa; color: #0f766e; font-weight: 800; font-size: 0.9rem; border-right: 2px solid #99f6e4 !important; }
+    .ctx-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; width: 68px; }
     .ctx-aff { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
     .ctx-neg { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
     .ctx-que { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
@@ -115,12 +115,39 @@
     tr.row-aff td.td-fut { background: #f5f3ff; } tr.row-neg td.td-fut { background: #ede9fe; } tr.row-que td.td-fut { background: #f5f3ff; }
 
     tr.active-grammar-row td:not(.subj-cell) { background: #fef9c3 !important; border-top: 2.5px solid #eab308 !important; border-bottom: 2.5px solid #eab308 !important; }
-    tr.active-grammar-row td.row-num { background: #facc15 !important; color: #713f12 !important; font-size: 0.95rem; }
+    tr.active-grammar-row td.row-num { background: #facc15 !important; color: #713f12 !important; font-size: 0.9rem; }
     td.active-grammar-cell { background: #fef08a !important; box-shadow: inset 0 0 0 3px #dc2626 !important; position: relative; animation: pulseCell 1.5s infinite alternate; }
-    td.active-grammar-cell::after { content: "🎯 ข้อนี้"; position: absolute; top: 2px; right: 4px; background: #dc2626; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 1px 5px; border-radius: 4px; }
+    td.active-grammar-cell::after { content: "🎯 ข้อนี้"; position: absolute; top: 2px; right: 4px; background: #dc2626; color: #fff; font-size: 0.6rem; font-weight: 800; padding: 1px 4px; border-radius: 4px; }
     @keyframes pulseCell { from { filter: brightness(1); } to { filter: brightness(0.95); } }
     .kw-pres { color: #15803d; font-weight: 800; } .kw-past { color: #c2410c; font-weight: 800; } .kw-fut { color: #6d28d9; font-weight: 800; } .kw-neg { color: #b91c1c; font-weight: 800; }
-    .v-tag { display: inline-block; background: rgba(255,255,255,0.85); padding: 1px 6px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 0.8rem; font-weight: 600; color: #334155; }
+    .v-tag { display: inline-block; background: rgba(255,255,255,0.85); padding: 1px 4px; border-radius: 5px; border: 1px solid #cbd5e1; font-size: 0.75rem; font-weight: 600; color: #334155; }
+
+    /* Extra Cards (3 ตารางเสริมด้านล่าง) */
+    .extra-cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; align-items: stretch; }
+    .card-shortcut { background: #fffbeb; border: 2px solid #fde68a; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .card-shortcut-header { background: #fef08a; padding: 10px 14px; font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; color: #78350f; }
+    .shortcut-list { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .shortcut-item { display: flex; gap: 10px; align-items: flex-start; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 10px; font-size: 0.8rem; line-height: 1.4; border: 1px solid #fef3c7; }
+    .num-circle { width: 24px; height: 24px; border-radius: 50%; color: white; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.8rem; }
+    .num-1 { background: #16a34a; } .num-2 { background: #ea580c; } .num-3 { background: #6d28d9; }
+
+    .card-tense { background: #ffffff; border: 2px solid #93c5fd; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .card-tense-header { background: #1d4ed8; color: white; padding: 10px 14px; font-weight: 800; font-size: 0.95rem; text-align: center; }
+    .tense-rows { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    .tense-row { display: flex; border-radius: 10px; overflow: hidden; font-size: 0.8rem; border: 1px solid rgba(0,0,0,0.08); }
+    .tense-pill { width: 95px; color: white; font-weight: 700; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 8px 4px; text-align: center; flex-shrink: 0; }
+    .tense-pill.pres { background: #16a34a; } .tense-pill.past { background: #ea580c; } .tense-pill.fut { background: #6d28d9; }
+    .tense-detail { padding: 8px 10px; flex: 1; line-height: 1.5; }
+    .tense-detail.pres-bg { background: #f0fdf4; } .tense-detail.past-bg { background: #fff7ed; } .tense-detail.fut-bg { background: #f5f3ff; }
+
+    .card-wh { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .card-wh-header { background: #e0f2fe; padding: 10px 14px; color: #0c4a6e; }
+    .card-wh-header .title { font-weight: 800; font-size: 0.95rem; display: flex; align-items: center; gap: 6px; }
+    .card-wh-header .subtitle { font-size: 0.75rem; color: #0369a1; margin-top: 2px; }
+    table.wh-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; }
+    table.wh-table td { padding: 6px 10px; border-bottom: 1px solid #bae6fd; }
+    table.wh-table tr:nth-child(even) { background: #e0f2fe; } table.wh-table tr:nth-child(odd) { background: #ffffff; }
+    table.wh-table td:first-child { font-weight: 700; color: #0f172a; } table.wh-table td:nth-child(2) { color: #334155; }
   </style>
 </head>
 <body>
@@ -133,8 +160,7 @@
       <h2>🔐 เข้าสู่ระบบฝึกแกรมม่า</h2>
       <p style="font-size:0.85rem; color:#64748b; margin-top:-5px; margin-bottom: 5px;">เลือกวิธีเข้าใช้งานเพื่อบันทึก Score ส่วนบุคคล</p>
       
-      <!-- ปุ่ม Google Login (OAuth 2.0 ผ่าน GIS) -->
-      <!-- **** แก้ Client ID ตรง data-client_id ด้านล่างนี้ **** -->
+      <!-- ปุ่ม Google Login (Client ID ที่ระบุไว้) -->
       <div id="g_id_onload"
            data-client_id="909370785324-2ahrlcm621cssss32hdn27o64su7g5e3.apps.googleusercontent.com" 
            data-context="signin"
@@ -153,7 +179,6 @@
 
       <div class="divider">หรือ พิมพ์ชื่อเข้าใช้งาน (Local)</div>
 
-      <!-- พิมพ์ชื่อและเลือกชื่อเดิม -->
       <div id="recent-login-container" style="display:none; text-align:left; width:100%;">
         <label style="font-size:0.8rem; font-weight:700; color:#475569;">บัญชีที่เคยใช้งานล่าสุด:</label>
         <select id="recent-user-select" class="login-select" style="margin-top:4px;" onchange="selectRecentUser(this.value)">
@@ -171,67 +196,76 @@
 
   <!-- แอปหลัก -->
   <div id="app-main">
+    
+    <!-- User Bar เพิ่มปุ่มลบโปรไฟล์ -->
     <div class="user-bar">
       <div>👤 ผู้ใช้งาน: <strong id="display-user-name">-</strong> (<span id="display-login-type">-</span>)</div>
-      <button onclick="logout()" style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">🚪 ออกจากระบบ</button>
+      <div class="user-actions">
+        <button onclick="deleteProfile()" style="background:#b91c1c; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">🗑️ ลบบัญชี</button>
+        <button onclick="logout()" style="background:#64748b; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.8rem;">🚪 ออกจากระบบ</button>
+      </div>
     </div>
 
     <div class="header">
-      <h2 style="margin:0;">⚡ Grammar Matrix Drill</h2>
+      <h2 style="margin:0; font-size: 1.25rem;">⚡ Grammar Matrix Drill</h2>
       <div class="stats">
         <div>ข้อที่: <strong id="q-progress">1 / 1</strong></div>
-        <div> Score รอบนี้: <strong id="score">0</strong></div>
+        <div> Score: <strong id="score">0</strong></div>
       </div>
     </div>
 
-    <!-- แผงควบคุม -->
+    <!-- แผงควบคุม (Collapsible) ซ่อนค่าตั้งต้น -->
     <div class="control-panel">
-      <div class="filter-row">
-        <div class="filter-group">
-          <label>🎯 โหมดการฝึก</label>
-          <select id="filter-mode" onchange="applyFiltersAndRestart()">
-            <option value="all">ฝึกทั้งหมด (ตามตัวกรอง)</option>
-            <option value="mistakes">🔥 เฉพาะแถวที่เคยตอบผิด</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>👤 ประธาน (Subject)</label>
-          <select id="filter-subject" onchange="applyFiltersAndRestart()">
-            <option value="all">ทุกประธาน (All Subjects)</option>
-            <option value="I">I (ฉัน)</option>
-            <option value="You">You (คุณ/พวกคุณ)</option>
-            <option value="He">He / She / It (เอกพจน์)</option>
-            <option value="We">We / They (พหูพจน์)</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>💬 บริบท (Sentence Type)</label>
-          <select id="filter-type" onchange="applyFiltersAndRestart()">
-            <option value="all">ทุกบริบท (บอกเล่า/ปฏิเสธ/คำถาม)</option>
-            <option value="บอกเล่า">บอกเล่า</option>
-            <option value="ปฏิเสธ">ปฏิเสธ</option>
-            <option value="คำถาม">คำถาม</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label>🕒 กาลเวลา (Tense)</label>
-          <select id="filter-tense" onchange="applyFiltersAndRestart()">
-            <option value="all">ทุกกาลเวลา (All Tenses)</option>
-            <option value="Present">ปัจจุบัน (Present)</option>
-            <option value="Past">อดีต (Past)</option>
-            <option value="Future">อนาคต (Future)</option>
-          </select>
-        </div>
+      <div class="cp-header" onclick="toggleFilterPanel()">
+        <span>⚙️ ตั้งค่า & ตัวกรองโจทย์</span>
+        <span id="cp-icon">▼</span>
       </div>
-
-      <div class="toggle-row">
-        <div class="toggle-group">
-          <button id="btn-toggle-ref" class="toggle-btn active" onclick="toggleTableRef()">🎯 อ้างอิงตาราง: เปิด</button>
-          <button id="btn-toggle-tts" class="toggle-btn" onclick="toggleAutoTTS()">🔇 อ่านอัตโนมัติ: ปิด</button>
+      <div class="cp-body" id="cp-content">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label>🎯 โหมดการฝึก</label>
+            <select id="filter-mode" onchange="applyFiltersAndRestart()">
+              <option value="all">ฝึกทั้งหมด</option>
+              <option value="mistakes">🔥 เฉพาะแถวที่เคยตอบผิด</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>👤 ประธาน</label>
+            <select id="filter-subject" onchange="applyFiltersAndRestart()">
+              <option value="all">ทุกประธาน</option>
+              <option value="I">I (ฉัน)</option>
+              <option value="You">You (คุณ/พวกคุณ)</option>
+              <option value="He">He / She / It (เอกพจน์)</option>
+              <option value="We">We / They (พหูพจน์)</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>💬 บริบท</label>
+            <select id="filter-type" onchange="applyFiltersAndRestart()">
+              <option value="all">ทุกบริบท</option>
+              <option value="บอกเล่า">บอกเล่า</option>
+              <option value="ปฏิเสธ">ปฏิเสธ</option>
+              <option value="คำถาม">คำถาม</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>🕒 กาลเวลา</label>
+            <select id="filter-tense" onchange="applyFiltersAndRestart()">
+              <option value="all">ทุกกาลเวลา</option>
+              <option value="Present">ปัจจุบัน (Present)</option>
+              <option value="Past">อดีต (Past)</option>
+              <option value="Future">อนาคต (Future)</option>
+            </select>
+          </div>
         </div>
-        <div class="toggle-group">
-          <button class="toggle-btn dash-btn" onclick="toggleDashboard()">📊 Score & ประวัติส่วนบุคคล</button>
-          <button class="toggle-btn reset-btn" onclick="resetUserLogs()">🗑️ ล้างประวัติสถิติ (Reset Logs)</button>
+        <div class="toggle-row">
+          <div class="toggle-group">
+            <button id="btn-toggle-ref" class="toggle-btn active" onclick="toggleTableRef()">🎯 อ้างอิงตาราง: เปิด</button>
+            <button id="btn-toggle-tts" class="toggle-btn" onclick="toggleAutoTTS()">🔇 อ่านอัตโนมัติ: ปิด</button>
+          </div>
+          <div class="toggle-group">
+            <button class="toggle-btn dash-btn" onclick="toggleDashboard()">📊 Score & ประวัติ</button>
+          </div>
         </div>
       </div>
     </div>
@@ -242,7 +276,7 @@
         <span class="badge" id="b-subject">ประธาน: -</span>
         <span class="badge" id="b-type">บริบท: -</span>
         <span class="badge" id="b-tense">กาล: -</span>
-        <span class="badge row-ref" id="b-row-ref">🎯 อ้างอิงตารางแถวที่ -</span>
+        <span class="badge row-ref" id="b-row-ref">🎯 ตารางแถวที่ -</span>
       </div>
 
       <div class="question-box" id="question-text">กำลังโหลดโจทย์...</div>
@@ -253,8 +287,8 @@
     <!-- หน้า Dashboard -->
     <div class="dashboard-panel" id="dashboard-panel">
       <div class="dashboard-header">
-        <h3 id="dash-title">📊 Score ส่วนบุคคล และ ประวัติการทำรายการ</h3>
-        <button onclick="loadDashboardStats()" style="background:#2563eb;color:white;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.8rem;">🔄 รีเฟรชข้อมูล</button>
+        <h3 id="dash-title">📊 Score ส่วนบุคคล</h3>
+        <button onclick="loadDashboardStats()" style="background:#2563eb;color:white;border:none;padding:5px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.8rem;">🔄 รีเฟรช</button>
       </div>
       <div class="dashboard-body">
         <div class="dash-summary" id="dash-summary">กำลังคำนวณสถิติ...</div>
@@ -269,10 +303,11 @@
     <button class="cheat-btn" onclick="toggleCheatSheet()">📖 เปิด/ปิด คัมภีร์ช่วยจำ</button>
 
     <div class="cheat-sheet" id="cheat-sheet">
+      <!-- ตารางหลัก 12 แถว -->
       <div class="main-table-card">
         <div class="main-table-banner">
           <span>📊 ตารางสรุปการจับคู่ประธานกับกริยาในทุกบริบท</span>
-          <span class="sub-note" id="banner-ref-note">🎯 กรอบสีทอง/แดง = ตำแหน่งโจทย์ข้อปัจจุบัน</span>
+          <span class="sub-note" id="banner-ref-note">🎯 กรอบทอง/แดง = ตำแหน่งปัจจุบัน</span>
         </div>
         <div class="main-table-wrap">
           <table class="main-table">
@@ -367,29 +402,97 @@
           </table>
         </div>
       </div>
+
+      <!-- ส่วนนี้เคยกู้คืนมาให้แล้ว: 3 กล่องเสริมด้านล่างสุด (Shortcut, Tense, Wh-Question)[cite: 5] -->
+      <div class="extra-cards-grid">
+        <div class="card-shortcut">
+          <div class="card-shortcut-header">💡 3 ข้อจำง่าย (Shortcut)</div>
+          <div class="shortcut-list">
+            <div class="shortcut-item">
+              <div class="num-circle num-1">1</div>
+              <div><strong>ปฏิเสธหรือคำถามด้วย do, does, did, will:</strong><br>กริยาแท้ใช้รูปธรรมดา (V.base) เสมอ ไม่ต้องเติม s และไม่ต้องเป็น V.2</div>
+            </div>
+            <div class="shortcut-item">
+              <div class="num-circle num-2">2</div>
+              <div><strong>อนาคต (Future):</strong> ประธานทุกตัวใช้<br>will / won't เหมือนกันหมด</div>
+            </div>
+            <div class="shortcut-item">
+              <div class="num-circle num-3">3</div>
+              <div><strong>อดีต (Past):</strong> กริยาทั่วไปใช้ did / V.2 เหมือนกันหมด มีแค่กลุ่ม was / were ที่แยกตามประธาน</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-tense">
+          <div class="card-tense-header">โครงสร้างหลักในแต่ละ Tense</div>
+          <div class="tense-rows">
+            <div class="tense-row">
+              <div class="tense-pill pres">🕒 ปัจจุบัน<br><small>(Present)</small></div>
+              <div class="tense-detail pres-bg">
+                <strong>บอกเล่า:</strong> am / is / are / do / does + V.1<br>
+                <strong>ปฏิเสธ:</strong> am not / isn't / aren't / don't / doesn't<br>
+                <strong>คำถาม:</strong> Am/Is/Are ...? / Do/Does ...?
+              </div>
+            </div>
+            <div class="tense-row">
+              <div class="tense-pill past">📅 อดีต<br><small>(Past)</small></div>
+              <div class="tense-detail past-bg">
+                <strong>บอกเล่า:</strong> was / were / did + V.2<br>
+                <strong>ปฏิเสธ:</strong> wasn't / weren't / didn't<br>
+                <strong>คำถาม:</strong> Was/Were ...? / Did ...?
+              </div>
+            </div>
+            <div class="tense-row">
+              <div class="tense-pill fut">⏩ อนาคต<br><small>(Future)</small></div>
+              <div class="tense-detail fut-bg">
+                <strong>บอกเล่า:</strong> will + V.ธรรมดา<br>
+                <strong>ปฏิเสธ:</strong> won't + V.ธรรมดา<br>
+                <strong>คำถาม:</strong> Will ...?
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-wh">
+          <div class="card-wh-header">
+            <div class="title">❓ คำถามแบบ Wh- Question</div>
+            <div class="subtitle">นำคำถามวางไว้หน้าประโยค ตามโครงสร้างในตาราง</div>
+          </div>
+          <table class="wh-table">
+            <tbody>
+              <tr><td>What</td><td>อะไร</td><td>What do you like?</td></tr>
+              <tr><td>Where</td><td>ที่ไหน</td><td>Where do you live?</td></tr>
+              <tr><td>When</td><td>เมื่อไหร่</td><td>When will you come?</td></tr>
+              <tr><td>Why</td><td>ทำไม</td><td>Why did he leave?</td></tr>
+              <tr><td>How</td><td>อย่างไร</td><td>How are you?</td></tr>
+              <tr><td>Who</td><td>ใคร</td><td>Who is she?</td></tr>
+              <tr><td>Which</td><td>อันไหน</td><td>Which one do you want?</td></tr>
+              <tr><td>Whose</td><td>ของใคร</td><td>Whose book is this?</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
 </div>
 
 <script>
-  // ค่าการเชื่อมต่อ Supabase
   const SUPABASE_URL = 'https://cbdqxxsvnxklmoaesgec.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNiZHF4eHN2bnhrbG1vYWVzZ2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2ODA3NDMsImV4cCI6MjEwODI1Njc0M30.TiR4pL-w3pe4ay0yaTktq1nu2EuYqLvFoUSNk5Ye6BY';
 
+  const fallbackQuestions = [
+    { subject_group: 'I (ฉัน)', sentence_type: 'ปฏิเสธ', tense: 'Past', prompt_sentence: 'I ___ (not / eat) breakfast yesterday.', correct_answer: "didn't eat", options: ["don't eat", "didn't eat", "didn't ate", "wasn't eat"], shortcut_hint: 'เมื่อปฏิเสธด้วย did กริยาแท้จะถูกล้างค่ากลับเป็นรูปธรรมดา (V.base) เสมอ' },
+    { subject_group: 'He / She / It (เอกพจน์)', sentence_type: 'บอกเล่า', tense: 'Present', prompt_sentence: 'She ___ (work) at the bank every day.', correct_answer: 'works', options: ['work', 'works', 'is work', 'working'], shortcut_hint: 'ประธานเอกพจน์ (He/She/It) บอกเล่า ปัจจุบัน กริยาช่อง 1 ต้องเติม s/es' },
+    { subject_group: 'He / She / It (เอกพจน์)', sentence_type: 'คำถาม', tense: 'Present', prompt_sentence: '___ he ___ (understand) the rule?', correct_answer: 'Does / understand', options: ['Do / understand', 'Does / understands', 'Does / understand', 'Is / understand'], shortcut_hint: 'เมื่อถามด้วย Does กริยาแท้จะถูกล้างค่ากลับเป็น V.base ไม่ต้องเติม s' },
+    { subject_group: 'We / They (พหูพจน์)', sentence_type: 'ปฏิเสธ', tense: 'Future', prompt_sentence: 'They ___ (not / join) the meeting tomorrow.', correct_answer: "won't join", options: ["don't join", "didn't join", "won't join", "won't joins"], shortcut_hint: 'อนาคต (Future) ประธานทุกตัวใช้ will / won\'t + V.ธรรมดา เหมือนกันหมด' }
+  ];
+
   const MATRIX_ROWS_CONFIG = [
-    { row: 1, key: 'I|บอกเล่า', label: 'แถว 1: I (ฉัน) • บอกเล่า' },
-    { row: 2, key: 'I|ปฏิเสธ', label: 'แถว 2: I (ฉัน) • ปฏิเสธ' },
-    { row: 3, key: 'I|คำถาม', label: 'แถว 3: I (ฉัน) • คำถาม' },
-    { row: 4, key: 'You|บอกเล่า', label: 'แถว 4: You • บอกเล่า' },
-    { row: 5, key: 'You|ปฏิเสธ', label: 'แถว 5: You • ปฏิเสธ' },
-    { row: 6, key: 'You|คำถาม', label: 'แถว 6: You • คำถาม' },
-    { row: 7, key: 'He|บอกเล่า', label: 'แถว 7: He/She/It • บอกเล่า' },
-    { row: 8, key: 'He|ปฏิเสธ', label: 'แถว 8: He/She/It • ปฏิเสธ' },
-    { row: 9, key: 'He|คำถาม', label: 'แถว 9: He/She/It • คำถาม' },
-    { row: 10, key: 'We|บอกเล่า', label: 'แถว 10: We/They • บอกเล่า' },
-    { row: 11, key: 'We|ปฏิเสธ', label: 'แถว 11: We/They • ปฏิเสธ' },
-    { row: 12, key: 'We|คำถาม', label: 'แถว 12: We/They • คำถาม' }
+    { row: 1, key: 'I|บอกเล่า', label: 'แถว 1: I (ฉัน) • บอกเล่า' }, { row: 2, key: 'I|ปฏิเสธ', label: 'แถว 2: I (ฉัน) • ปฏิเสธ' }, { row: 3, key: 'I|คำถาม', label: 'แถว 3: I (ฉัน) • คำถาม' },
+    { row: 4, key: 'You|บอกเล่า', label: 'แถว 4: You • บอกเล่า' }, { row: 5, key: 'You|ปฏิเสธ', label: 'แถว 5: You • ปฏิเสธ' }, { row: 6, key: 'You|คำถาม', label: 'แถว 6: You • คำถาม' },
+    { row: 7, key: 'He|บอกเล่า', label: 'แถว 7: He/She/It • บอกเล่า' }, { row: 8, key: 'He|ปฏิเสธ', label: 'แถว 8: He/She/It • ปฏิเสธ' }, { row: 9, key: 'He|คำถาม', label: 'แถว 9: He/She/It • คำถาม' },
+    { row: 10, key: 'We|บอกเล่า', label: 'แถว 10: We/They • บอกเล่า' }, { row: 11, key: 'We|ปฏิเสธ', label: 'แถว 11: We/They • ปฏิเสธ' }, { row: 12, key: 'We|คำถาม', label: 'แถว 12: We/They • คำถาม' }
   ];
 
   let currentUser = null;
@@ -403,6 +506,7 @@
   let hasFailedCurrentQ = false;
   let showTableReference = true;
   let autoPlayTTS = false;
+  let isFilterPanelOpen = false; // สำหรับปิดเปิด Tab ตั้งค่า
   let sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   window.addEventListener('DOMContentLoaded', () => {
@@ -419,10 +523,11 @@
       select.innerHTML = '<option value="">-- เลือกบัญชีเดิมที่มีประวัติ --</option>';
       savedUsers.forEach(user => {
         const opt = document.createElement('option');
-        opt.value = user;
-        opt.innerText = user;
+        opt.value = user; opt.innerText = user;
         select.appendChild(opt);
       });
+    } else {
+      container.style.display = 'none';
     }
   }
 
@@ -435,9 +540,7 @@
   }
 
   function selectRecentUser(val) {
-    if (val) {
-      document.getElementById('username-input').value = val;
-    }
+    if (val) document.getElementById('username-input').value = val;
   }
 
   function loginWithName() {
@@ -449,17 +552,14 @@
     startAppSession();
   }
 
-  // ฟังก์ชันรองรับ Google Identity Services (GIS) Callback
   function handleGoogleLogin(response) {
     try {
-      // Decode JWT Payload เพื่อดึงชื่อและอีเมลผู้ใช้
       const base64Url = response.credential.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
           return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
       const payload = JSON.parse(jsonPayload);
-      
       currentUser = payload.name || payload.email;
       loginType = 'Google OAuth';
       saveUserToLocalStorage(currentUser);
@@ -478,6 +578,37 @@
     loadRecentUsersDropdown();
   }
 
+  // ฟังก์ชันลบโปรไฟล์และล้างข้อมูลบน Supabase
+  async function deleteProfile() {
+    if (!confirm(`⚠️ คุณต้องการลบโปรไฟล์ "${currentUser}" และล้างข้อมูลสถิติทั้งหมดใช่หรือไม่? (การกระทำนี้ไม่สามารถกู้คืนได้)`)) return;
+    
+    // 1. ลบบน Supabase
+    const { error } = await sbClient.from('practice_logs').delete().eq('username', currentUser);
+    if (error) { alert('เกิดข้อผิดพลาดในการลบโปรไฟล์: ' + error.message); return; }
+    
+    // 2. ลบออกจาก LocalStorage
+    let savedUsers = JSON.parse(localStorage.getItem('grammar_recent_users') || '[]');
+    savedUsers = savedUsers.filter(u => u !== currentUser);
+    localStorage.setItem('grammar_recent_users', JSON.stringify(savedUsers));
+    
+    alert(`ลบโปรไฟล์ ${currentUser} ออกจากระบบเรียบร้อยแล้ว`);
+    logout();
+  }
+
+  // ฟังก์ชันสลับ เปิด/ปิด Tab ตัวกรองโจทย์
+  function toggleFilterPanel() {
+    isFilterPanelOpen = !isFilterPanelOpen;
+    const body = document.getElementById('cp-content');
+    const icon = document.getElementById('cp-icon');
+    if (isFilterPanelOpen) {
+      body.style.display = 'flex';
+      icon.innerText = '▲';
+    } else {
+      body.style.display = 'none';
+      icon.innerText = '▼';
+    }
+  }
+
   async function startAppSession() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-main').style.display = 'block';
@@ -485,21 +616,14 @@
     document.getElementById('display-login-type').innerText = loginType;
 
     const { data, error } = await sbClient.from('grammar_questions').select('*');
-    if (!error && data && data.length > 0) {
-      allQuestions = data;
-    }
+    if (!error && data && data.length > 0) { allQuestions = data; }
     await fetchPracticeLogs();
     applyFiltersAndRestart();
   }
 
   async function fetchPracticeLogs() {
-    const { data, error } = await sbClient
-      .from('practice_logs')
-      .select('*')
-      .eq('username', currentUser); // โหลดประวัติเฉพาะของ User นี้
-    if (!error && data) {
-      practiceLogs = data;
-    }
+    const { data, error } = await sbClient.from('practice_logs').select('*').eq('username', currentUser);
+    if (!error && data) { practiceLogs = data; }
   }
 
   function normalizeSubjectKey(subjGroup) {
@@ -523,16 +647,14 @@
     let text = prompt;
     const parts = answer.split('/').map(s => s.trim());
     parts.forEach(part => { text = text.replace('___', part); });
-    text = text.replace(/\s*\([^)]*\)/g, '');
-    return text.replace(/\s+/g, ' ').trim();
+    return text.replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
   }
 
   function speakSentence(text) {
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'en-US';
-    utter.rate = 0.92;
+    utter.lang = 'en-US'; utter.rate = 0.92;
     window.speechSynthesis.speak(utter);
   }
 
@@ -569,7 +691,7 @@
     const targetRow = document.querySelector(`tr[data-subject="${sKey}"][data-type="${currentQ.sentence_type}"]`);
     if (targetRow) {
       const rowNum = targetRow.querySelector('.row-num').innerText;
-      document.getElementById('b-row-ref').innerText = `🎯 อ้างอิงตารางแถวที่ ${rowNum}`;
+      document.getElementById('b-row-ref').innerText = `🎯 ตารางแถวที่ ${rowNum}`;
       if (showTableReference) {
         targetRow.classList.add('active-grammar-row');
         const targetCell = targetRow.querySelector(`td[data-tense="${currentQ.tense}"]`);
@@ -607,9 +729,7 @@
     });
 
     questionQueue = shuffleArray(filtered);
-    currentIndex = 0;
-    score = 0;
-    document.getElementById('score').innerText = score;
+    currentIndex = 0; score = 0; document.getElementById('score').innerText = score;
     renderCurrentQuestion();
   }
 
@@ -618,8 +738,7 @@
     fb.className = 'feedback'; fb.innerHTML = '';
     
     if (questionQueue.length === 0) {
-      currentQ = null;
-      highlightCurrentMatrixRow();
+      currentQ = null; highlightCurrentMatrixRow();
       document.getElementById('q-progress').innerText = `0 / 0`;
       document.getElementById('question-text').innerHTML = `✨ ไม่พบโจทย์ในหมวดที่เลือก (หรือคุณยังไม่เคยตอบผิดเลย!)`;
       document.getElementById('options-container').innerHTML = `<button class="opt-btn" style="grid-column: 1 / -1; background:#2563eb; color:white; border:none;" onclick="document.getElementById('filter-mode').value='all';applyFiltersAndRestart();">🔄 กลับไปโหมดฝึกทั้งหมด</button>`;
@@ -628,13 +747,12 @@
 
     if (currentIndex >= questionQueue.length) {
       document.getElementById('q-progress').innerText = `${questionQueue.length} / ${questionQueue.length}`;
-      document.getElementById('question-text').innerHTML = `🎉 จบการฝึกชุดนี้!<br><span style="font-size:1.05rem;font-weight:500;"> Score รอบนี้ของคุณ: <strong>${score}</strong> จาก <strong>${questionQueue.length}</strong> ข้อ</span>`;
+      document.getElementById('question-text').innerHTML = `🎉 จบการฝึกชุดนี้!<br><span style="font-size:1.05rem;font-weight:500;"> Score รอบนี้: <strong>${score}</strong> จาก <strong>${questionQueue.length}</strong> ข้อ</span>`;
       document.getElementById('options-container').innerHTML = `<button class="opt-btn" style="grid-column: 1 / -1; background:#2563eb; color:white; border:none;" onclick="applyFiltersAndRestart()">🔄 เริ่มเล่นรอบใหม่</button>`;
       return;
     }
 
-    currentQ = questionQueue[currentIndex];
-    hasFailedCurrentQ = false;
+    currentQ = questionQueue[currentIndex]; hasFailedCurrentQ = false;
     document.getElementById('q-progress').innerText = `${currentIndex + 1} / ${questionQueue.length}`;
     document.getElementById('b-subject').innerText = `ประธาน: ${currentQ.subject_group}`;
     document.getElementById('b-type').innerText = `บริบท: ${currentQ.sentence_type}`;
@@ -643,7 +761,6 @@
     document.getElementById('question-text').innerText = currentQ.prompt_sentence;
 
     highlightCurrentMatrixRow();
-
     const container = document.getElementById('options-container');
     container.innerHTML = '';
     currentQ.options.forEach(opt => {
@@ -659,13 +776,10 @@
     const fb = document.getElementById('feedback-box');
 
     if (isCorrect) {
-      btnElement.classList.add('correct-choice');
-      btnElement.innerText = `✅ ${selected}`;
+      btnElement.classList.add('correct-choice'); btnElement.innerText = `✅ ${selected}`;
       document.querySelectorAll('#options-container .opt-btn').forEach(b => b.disabled = true);
-
-      if (!hasFailedCurrentQ) {
-        score++; document.getElementById('score').innerText = score;
-      }
+      if (!hasFailedCurrentQ) { score++; document.getElementById('score').innerText = score; }
+      
       const fullSentence = buildFullEnglishSentence(currentQ.prompt_sentence, currentQ.correct_answer);
       const escapedSentence = fullSentence.replace(/'/g, "\\'");
       if (autoPlayTTS) speakSentence(fullSentence);
@@ -679,16 +793,14 @@
         <div class="action-row"><button class="next-btn" onclick="goNext()">ข้อต่อไป ➡️</button></div>`;
     } else {
       hasFailedCurrentQ = true;
-      btnElement.classList.add('wrong-choice');
-      btnElement.disabled = true;
-      btnElement.innerText = `❌ ${selected}`;
+      btnElement.classList.add('wrong-choice'); btnElement.disabled = true; btnElement.innerText = `❌ ${selected}`;
       fb.className = 'feedback wrong';
       fb.innerHTML = `❌ <strong>"${selected}" ยังไม่ถูก!</strong> ลองดูคำใบ้แล้วเลือกใหม่ได้เลย:<br>💡 <em>Shortcut: ${currentQ.shortcut_hint}</em>`;
     }
 
     const newLog = {
-      username: currentUser, // บันทึกผูกกับ User 
-      subject_group: currentQ.subject_group, // บันทึกประธานประโยคที่ทำ
+      username: currentUser,
+      subject_group: currentQ.subject_group,
       sentence_type: currentQ.sentence_type,
       tense: currentQ.tense,
       is_correct: isCorrect
@@ -696,36 +808,12 @@
     practiceLogs.push(newLog);
     await sbClient.from('practice_logs').insert([newLog]);
 
-    if (document.getElementById('dashboard-panel').style.display === 'block') {
-      renderDashboardUI();
-    }
+    if (document.getElementById('dashboard-panel').style.display === 'block') { renderDashboardUI(); }
   }
 
   function goNext() {
     currentIndex++;
     renderCurrentQuestion();
-  }
-
-  async function resetUserLogs() {
-    if (!confirm(`คุณต้องการล้างประวัติสถิติและการตอบผิดทั้งหมดของ "${currentUser}" ใช่หรือไม่? (ไม่สามารถกู้คืนได้)`)) return;
-    
-    // ลบข้อมูลบน Supabase เฉพาะของ Username นี้
-    const { error } = await sbClient
-      .from('practice_logs')
-      .delete()
-      .eq('username', currentUser);
-      
-    if (error) {
-      alert('เกิดข้อผิดพลาดในการล้างสถิติ: ' + error.message);
-      return;
-    }
-    
-    practiceLogs = [];
-    alert(`ล้างประวัติสถิติของ ${currentUser} เรียบร้อยแล้ว เริ่มต้นเก็บสถิติรอบใหม่ได้เลยครับ!`);
-    applyFiltersAndRestart();
-    if (document.getElementById('dashboard-panel').style.display === 'block') {
-      renderDashboardUI();
-    }
   }
 
   async function toggleDashboard() {
@@ -736,7 +824,7 @@
   }
 
   async function loadDashboardStats() {
-    document.getElementById('dash-summary').innerText = 'กำลังดึงข้อมูลสถิติส่วนบุคคลจาก Supabase...';
+    document.getElementById('dash-summary').innerText = 'กำลังดึงข้อมูล...';
     await fetchPracticeLogs();
     renderDashboardUI();
   }
@@ -750,51 +838,44 @@
     historyListEl.innerHTML = '';
 
     if (practiceLogs.length === 0) {
-      historyListEl.innerHTML = `<span style="font-size:0.82rem; color:#64748b;">ยังไม่มีประวัติการทำรายการ (ลองเริ่มฝึกทำโจทย์สักข้อดูครับ)</span>`;
+      historyListEl.innerHTML = `<span style="font-size:0.8rem; color:#64748b;">ยังไม่มีประวัติการทำรายการ</span>`;
     }
 
     practiceLogs.slice().reverse().forEach((log, index) => {
-      grandTotal++;
-      if (log.is_correct) grandCorrect++;
-      
+      grandTotal++; if (log.is_correct) grandCorrect++;
       const sKey = normalizeSubjectKey(log.subject_group);
       const rowKey = `${sKey}|${log.sentence_type}`;
       if (statsMap[rowKey]) {
         statsMap[rowKey].total++;
         if (log.is_correct) statsMap[rowKey].correct++;
       }
-
       if (index < 15) {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'history-item';
         itemDiv.innerHTML = `<span>ประธาน: ${sKey} | ${log.sentence_type} | ${log.tense}</span>
-          <span style="font-weight:700; color:${log.is_correct ? '#15803d' : '#b91c1c'}">${log.is_correct ? '✅ ถูกต้อง' : '❌ ตอบผิด'}</span>`;
+          <span style="font-weight:700; color:${log.is_correct ? '#15803d' : '#b91c1c'}">${log.is_correct ? '✅' : '❌'}</span>`;
         historyListEl.appendChild(itemDiv);
       }
     });
 
     const overallPct = grandTotal > 0 ? Math.round((grandCorrect / grandTotal) * 100) : 0;
     document.getElementById('dash-summary').innerHTML = `
-      <div>👤 ผู้ใช้งาน: <strong>${currentUser}</strong></div>
-      <div>📝 ทำโจทย์รวม: <strong>${grandTotal}</strong> ครั้ง</div>
-      <div>✅ Score ส่วนบุคคล (ถูกครั้งแรก): <strong>${grandCorrect}</strong> ข้อ</div>
-      <div>🎯 ความแม่นยำรวม: <strong>${overallPct}%</strong></div>
+      <div>👤: <strong>${currentUser}</strong></div>
+      <div>📝 รวม: <strong>${grandTotal}</strong> ข้อ</div>
+      <div>✅ ถูก: <strong>${grandCorrect}</strong> ข้อ</div>
+      <div>🎯 แม่นยำ: <strong>${overallPct}%</strong></div>
     `;
 
     const grid = document.getElementById('dash-grid');
     grid.innerHTML = '';
-
     MATRIX_ROWS_CONFIG.forEach(item => {
       const st = statsMap[item.key];
       const pct = (st && st.total > 0) ? Math.round((st.correct / st.total) * 100) : null;
       let barColor = '#94a3b8';
       if (pct !== null) {
-        if (pct >= 80) barColor = '#16a34a';
-        else if (pct >= 50) barColor = '#eab308';
-        else barColor = '#dc2626';
+        if (pct >= 80) barColor = '#16a34a'; else if (pct >= 50) barColor = '#eab308'; else barColor = '#dc2626';
       }
-      const card = document.createElement('div');
-      card.className = 'dash-row-card';
+      const card = document.createElement('div'); card.className = 'dash-row-card';
       card.innerHTML = `<div class="dash-row-top"><span>${item.label}</span>
           <span style="color:${barColor};">${pct !== null ? `${pct}% (${st.correct}/${st.total})` : 'ยังไม่เคยฝึก'}</span></div>
         <div class="progress-track"><div class="progress-fill" style="width:${pct !== null ? pct : 0}%; background:${barColor};"></div></div>`;
