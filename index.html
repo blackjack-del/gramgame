@@ -22,6 +22,10 @@
     .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #cbd5e1; }
     .divider::before { margin-right: .75em; }
     .divider::after { margin-left: .75em; }
+    
+    /* สไตล์ปุ่มเปิดดูคัมภีร์ที่หน้า Login */
+    .btn-cheat-login { background: #0f766e; color: white; border: none; padding: 10px; border-radius: 10px; font-weight: 600; cursor: pointer; margin-top: 10px; width: 100%; transition: 0.2s; }
+    .btn-cheat-login:hover { background: #0d9488; }
 
     #app-main { display: none; }
     .user-bar { display: flex; justify-content: space-between; align-items: center; background: #f1f5f9; padding: 10px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 0.9rem; font-weight: 600; flex-wrap: wrap; gap: 10px; }
@@ -81,7 +85,9 @@
     .history-item { font-size: 0.8rem; padding: 6px 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; }
 
     .cheat-btn { margin-top: 20px; background: linear-gradient(135deg, #1e293b, #334155); color: white; border: none; padding: 12px 16px; border-radius: 12px; cursor: pointer; font-weight: 700; width: 100%; font-size: 0.95rem; }
-    .cheat-sheet { display: none; margin-top: 20px; }
+    
+    /* สไตล์สำหรับตารางคัมภีร์ที่เป็น Global Object */
+    .cheat-sheet-global { display: none; margin-top: 20px; width: 100%; max-width: 1000px;}
     .main-table-card { background: #ffffff; border-radius: 14px; border: 2px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 20px; }
     .main-table-banner { background: linear-gradient(90deg, #0f172a, #1e3a8a); color: #ffffff; padding: 10px 14px; font-weight: 800; font-size: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
     .main-table-banner span.sub-note { font-size: 0.75rem; font-weight: 500; background: rgba(255,255,255,0.15); padding: 4px 8px; border-radius: 999px; }
@@ -169,7 +175,13 @@
         <input type="text" id="username-input" class="login-input" placeholder="เช่น Somchai">
       </div>
       <button class="btn-login" onclick="loginWithName()">🚀 เข้าสู่ระบบด้วยชื่อนี้</button>
+      
+      <!-- ปุ่มสำหรับเปิดคัมภีร์ที่หน้าแรก -->
+      <button class="btn-cheat-login" onclick="toggleCheatSheetGlobal('login')">📖 เปิดดูคัมภีร์ช่วยจำ (ดูตารางก่อนฝึก)</button>
     </div>
+    
+    <!-- ตำแหน่งแสดงคัมภีร์ในหน้า Login -->
+    <div id="cheat-sheet-login-container" style="width: 100%; display: flex; justify-content: center;"></div>
   </div>
 
   <div id="app-main">
@@ -274,104 +286,116 @@
       </div>
     </div>
 
-    <button class="cheat-btn" onclick="toggleCheatSheet()">📖 เปิด/ปิด คัมภีร์ช่วยจำ</button>
-    <div class="cheat-sheet" id="cheat-sheet">
-      <div class="main-table-card">
-        <div class="main-table-banner">
-          <span>📊 ตารางสรุปการจับคู่ประธานกับกริยาในทุกบริบท</span>
-          <span class="sub-note" id="banner-ref-note">🎯 กรอบทอง/แดง = ตำแหน่งปัจจุบัน</span>
-        </div>
-        <div class="main-table-wrap">
-          <table class="main-table">
-            <thead>
-              <tr><th class="th-num">#</th><th class="th-sub">ประธาน (Subject)</th><th class="th-ctx">บริบท</th><th class="th-pres">🕒 ปัจจุบัน (Present)</th><th class="th-past">📅 อดีต (Past)</th><th class="th-fut">⏩ อนาคต (Future)</th></tr>
-            </thead>
-            <tbody>
-              <tr id="matrix-row-1" class="group-start row-aff" data-subject="I" data-type="บอกเล่า">
-                <td class="row-num">1</td><td class="subj-cell" rowspan="3">I<small>(ฉัน)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-pres">am / do</span><br><span class="v-tag">V.1 ไม่เติม s</span></td><td class="td-past" data-tense="Past"><span class="kw-past">was / did</span> / <span class="v-tag">V.2</span></td><td class="td-fut" data-tense="Future"><span class="kw-fut">will</span> + <span class="v-tag">V.ธรรมดา</span></td>
-              </tr>
-              <tr id="matrix-row-2" class="row-neg" data-subject="I" data-type="ปฏิเสธ">
-                <td class="row-num">2</td><td><span class="ctx-badge ctx-neg">ปฏิเสธ</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-neg">don't / am not</span></td><td class="td-past" data-tense="Past"><span class="kw-neg">didn't / wasn't</span></td><td class="td-fut" data-tense="Future"><span class="kw-neg">won't</span> + <span class="v-tag">V.ธรรมดา</span></td>
-              </tr>
-              <tr id="matrix-row-3" class="row-que" data-subject="I" data-type="คำถาม">
-                <td class="row-num">3</td><td><span class="ctx-badge ctx-que">คำถาม</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-pres">Do</span> I...? / <span class="kw-pres">Am</span> I...?</td><td class="td-past" data-tense="Past"><span class="kw-past">Did</span> I...? / <span class="kw-past">Was</span> I...?</td><td class="td-fut" data-tense="Future"><span class="kw-fut">Will</span> I...?</td>
-              </tr>
-              <tr id="matrix-row-4" class="group-start row-aff" data-subject="You" data-type="บอกเล่า">
-                <td class="row-num">4</td><td class="subj-cell" rowspan="3">You<small>(คุณ/พวก)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-pres">are / do</span><br><span class="v-tag">V.1 ไม่เติม s</span></td><td class="td-past" data-tense="Past"><span class="kw-past">were / did</span> / <span class="v-tag">V.2</span></td><td class="td-fut" data-tense="Future"><span class="kw-fut">will</span> + <span class="v-tag">V.ธรรมดา</span></td>
-              </tr>
-              <tr id="matrix-row-5" class="row-neg" data-subject="You" data-type="ปฏิเสธ">
-                <td class="row-num">5</td><td><span class="ctx-badge ctx-neg">ปฏิเสธ</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-neg">don't / aren't</span></td><td class="td-past" data-tense="Past"><span class="kw-neg">didn't / weren't</span></td><td class="td-fut" data-tense="Future"><span class="kw-neg">won't</span> + <span class="v-tag">V.ธรรมดา</span></td>
-              </tr>
-              <tr id="matrix-row-6" class="row-que" data-subject="You" data-type="คำถาม">
-                <td class="row-num">6</td><td><span class="ctx-badge ctx-que">คำถาม</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-pres">Do</span> you...? / <span class="kw-pres">Are</span> you...?</td><td class="td-past" data-tense="Past"><span class="kw-past">Did</span> you...? / <span class="kw-past">Were</span> you...?</td><td class="td-fut" data-tense="Future"><span class="kw-fut">Will</span> you...?</td>
-              </tr>
-              <tr id="matrix-row-7" class="group-start row-aff" data-subject="He" data-type="บอกเล่า">
-                <td class="row-num">7</td><td class="subj-cell" rowspan="3">He/She/It<small>(เอกพจน์)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-pres">is / does</span><br><span class="v-tag" style="border-color:#16a34a;color:#15803d;">V.1 เติม s/es</span></td><td class="td-past" data-tense="Past"><span class="kw-past">was / did</span> / <span class="v-tag">V.2</span></td><td class="td-fut" data-tense="Future"><span class="kw-fut">will</span> + <span class="v-tag">V.ธรรมดา</span></td>
-              </tr>
-              <tr id="matrix-row-8" class="row-neg" data-subject="He" data-type="ปฏิเสธ">
-                <td class="row-num">8</td><td><span class="ctx-badge ctx-neg">ปฏิเสธ</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-neg">doesn't / isn't</span></td><td class="td-past" data-tense="Past"><span class="kw-neg">didn't / wasn't</span></td><td class="td-fut" data-tense="Future"><span class="kw-neg">won't</span> + <span class="v-tag">V.ธรรมดา</span></td>
-              </tr>
-              <tr id="matrix-row-9" class="row-que" data-subject="He" data-type="คำถาม">
-                <td class="row-num">9</td><td><span class="ctx-badge ctx-que">คำถาม</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-pres">Does</span> he...? / <span class="kw-pres">Is</span> he...?</td><td class="td-past" data-tense="Past"><span class="kw-past">Did</span> he...? / <span class="kw-past">Was</span> he...?</td><td class="td-fut" data-tense="Future"><span class="kw-fut">Will</span> he...?</td>
-              </tr>
-              <tr id="matrix-row-10" class="group-start row-aff" data-subject="We" data-type="บอกเล่า">
-                <td class="row-num">10</td><td class="subj-cell" rowspan="3">We/They<small>(พหูพจน์)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-pres">are / do</span><br><span class="v-tag">V.1 ไม่เติม s</span></td><td class="td-past" data-tense="Past"><span class="kw-past">were / did</span> / <span class="v-tag">V.2</span></td><td class="td-fut" data-tense="Future"><span class="kw-fut">will</span> + <span class="v-tag">V.ธรรมดา</span></td>
-              </tr>
-              <tr id="matrix-row-11" class="row-neg" data-subject="We" data-type="ปฏิเสธ">
-                <td class="row-num">11</td><td><span class="ctx-badge ctx-neg">ปฏิเสธ</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-neg">don't / aren't</span></td><td class="td-past" data-tense="Past"><span class="kw-neg">didn't / weren't</span></td><td class="td-fut" data-tense="Future"><span class="kw-neg">won't</span> + <span class="v-tag">V.ธรรมดา</span></td>
-              </tr>
-              <tr id="matrix-row-12" class="row-que" data-subject="We" data-type="คำถาม">
-                <td class="row-num">12</td><td><span class="ctx-badge ctx-que">คำถาม</span></td>
-                <td class="td-pres" data-tense="Present"><span class="kw-pres">Do</span> they...? / <span class="kw-pres">Are</span> they...?</td><td class="td-past" data-tense="Past"><span class="kw-past">Did</span> they...? / <span class="kw-past">Were</span> they...?</td><td class="td-fut" data-tense="Future"><span class="kw-fut">Will</span> they...?</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <button class="cheat-btn" onclick="toggleCheatSheetGlobal('game')">📖 เปิด/ปิด คัมภีร์ช่วยจำ</button>
+    
+    <!-- ตำแหน่งแสดงคัมภีร์ในหน้า Game -->
+    <div id="cheat-sheet-game-container" style="width: 100%; display: flex; justify-content: center;"></div>
+  </div>
+</div>
 
-      <div class="extra-cards-grid">
-        <div class="card-shortcut">
-          <div class="card-shortcut-header">💡 3 ข้อจำง่าย (Shortcut)</div>
-          <div class="shortcut-list">
-            <div class="shortcut-item"><div class="num-circle num-1">1</div><div><strong>ปฏิเสธ/คำถามด้วย do, does, did, will:</strong><br>กริยาแท้ใช้รูปธรรมดา (V.base) เสมอ ไม่ต้องเติม s และไม่ต้องเป็น V.2</div></div>
-            <div class="shortcut-item"><div class="num-circle num-2">2</div><div><strong>อนาคต (Future):</strong> ประธานทุกตัวใช้<br>will / won't เหมือนกันหมด</div></div>
-            <div class="shortcut-item"><div class="num-circle num-3">3</div><div><strong>อดีต (Past):</strong> กริยาทั่วไปใช้ did / V.2 เหมือนกันหมด มีแค่ was / were ที่แยกตามประธาน</div></div>
-          </div>
-        </div>
-        <div class="card-tense">
-          <div class="card-tense-header">โครงสร้างหลักในแต่ละ Tense</div>
-          <div class="tense-rows">
-            <div class="tense-row"><div class="tense-pill pres">🕒 ปัจจุบัน<br><small>(Present)</small></div><div class="tense-detail pres-bg"><strong>บอกเล่า:</strong> am / is / are / do / does + V.1<br><strong>ปฏิเสธ:</strong> am not / isn't / aren't / don't / doesn't<br><strong>คำถาม:</strong> Am/Is/Are ...? / Do/Does ...?</div></div>
-            <div class="tense-row"><div class="tense-pill past">📅 อดีต<br><small>(Past)</small></div><div class="tense-detail past-bg"><strong>บอกเล่า:</strong> was / were / did + V.2<br><strong>ปฏิเสธ:</strong> wasn't / weren't / didn't<br><strong>คำถาม:</strong> Was/Were ...? / Did ...?</div></div>
-            <div class="tense-row"><div class="tense-pill fut">⏩ อนาคต<br><small>(Future)</small></div><div class="tense-detail fut-bg"><strong>บอกเล่า:</strong> will + V.ธรรมดา<br><strong>ปฏิเสธ:</strong> won't + V.ธรรมดา<br><strong>คำถาม:</strong> Will ...?</div></div>
-          </div>
-        </div>
-        <div class="card-wh">
-          <div class="card-wh-header"><div class="title">❓ คำถามแบบ Wh- Question</div><div class="subtitle">นำคำถามวางไว้หน้าประโยค</div></div>
-          <table class="wh-table">
-            <tbody>
-              <tr><td>What</td><td>อะไร</td><td>What do you like?</td></tr><tr><td>Where</td><td>ที่ไหน</td><td>Where do you live?</td></tr>
-              <tr><td>When</td><td>เมื่อไหร่</td><td>When will you come?</td></tr><tr><td>Why</td><td>ทำไม</td><td>Why did he leave?</td></tr>
-              <tr><td>How</td><td>อย่างไร</td><td>How are you?</td></tr><tr><td>Who</td><td>ใคร</td><td>Who is she?</td></tr>
-              <tr><td>Which</td><td>อันไหน</td><td>Which one do you want?</td></tr><tr><td>Whose</td><td>ของใคร</td><td>Whose book is this?</td></tr>
-            </tbody>
-          </table>
-        </div>
+<!-- =========================================================================
+     โค้ดคัมภีร์ (Global) ที่จะถูกย้ายสลับไปมาระหว่างหน้า Login กับหน้า Game 
+========================================================================= -->
+<div class="cheat-sheet-global" id="cheat-sheet-content">
+  <div class="main-table-card">
+    <div class="main-table-banner">
+      <span>📊 ตารางสรุปการจับคู่ประธานกับกริยาในทุกบริบท</span>
+      <span class="sub-note" id="banner-ref-note">🎯 กรอบทอง/แดง = ตำแหน่งปัจจุบัน</span>
+    </div>
+    <div class="main-table-wrap">
+      <table class="main-table">
+        <thead>
+          <tr><th class="th-num">#</th><th class="th-sub">ประธาน (Subject)</th><th class="th-ctx">บริบท</th><th class="th-pres">🕒 ปัจจุบัน (Present)</th><th class="th-past">📅 อดีต (Past)</th><th class="th-fut">⏩ อนาคต (Future)</th></tr>
+        </thead>
+        <tbody>
+          <!-- Group 1: I -->
+          <tr id="matrix-row-1" class="group-start row-aff" data-subject="I" data-type="บอกเล่า">
+            <td class="row-num">1</td><td class="subj-cell" rowspan="3">I<small>(ฉัน)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-pres">am / do</span><br><span class="v-tag">V.1 ไม่เติม s</span></td><td class="td-past" data-tense="Past"><span class="kw-past">was / did</span> / <span class="v-tag">V.2</span></td><td class="td-fut" data-tense="Future"><span class="kw-fut">will</span> + <span class="v-tag">V.ธรรมดา</span></td>
+          </tr>
+          <tr id="matrix-row-2" class="row-neg" data-subject="I" data-type="ปฏิเสธ">
+            <td class="row-num">2</td><td><span class="ctx-badge ctx-neg">ปฏิเสธ</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-neg">don't / am not</span></td><td class="td-past" data-tense="Past"><span class="kw-neg">didn't / wasn't</span></td><td class="td-fut" data-tense="Future"><span class="kw-neg">won't</span> + <span class="v-tag">V.ธรรมดา</span></td>
+          </tr>
+          <tr id="matrix-row-3" class="row-que" data-subject="I" data-type="คำถาม">
+            <td class="row-num">3</td><td><span class="ctx-badge ctx-que">คำถาม</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-pres">Do</span> I...? / <span class="kw-pres">Am</span> I...?</td><td class="td-past" data-tense="Past"><span class="kw-past">Did</span> I...? / <span class="kw-past">Was</span> I...?</td><td class="td-fut" data-tense="Future"><span class="kw-fut">Will</span> I...?</td>
+          </tr>
+          <!-- Group 2: You -->
+          <tr id="matrix-row-4" class="group-start row-aff" data-subject="You" data-type="บอกเล่า">
+            <td class="row-num">4</td><td class="subj-cell" rowspan="3">You<small>(คุณ/พวก)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-pres">are / do</span><br><span class="v-tag">V.1 ไม่เติม s</span></td><td class="td-past" data-tense="Past"><span class="kw-past">were / did</span> / <span class="v-tag">V.2</span></td><td class="td-fut" data-tense="Future"><span class="kw-fut">will</span> + <span class="v-tag">V.ธรรมดา</span></td>
+          </tr>
+          <tr id="matrix-row-5" class="row-neg" data-subject="You" data-type="ปฏิเสธ">
+            <td class="row-num">5</td><td><span class="ctx-badge ctx-neg">ปฏิเสธ</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-neg">don't / aren't</span></td><td class="td-past" data-tense="Past"><span class="kw-neg">didn't / weren't</span></td><td class="td-fut" data-tense="Future"><span class="kw-neg">won't</span> + <span class="v-tag">V.ธรรมดา</span></td>
+          </tr>
+          <tr id="matrix-row-6" class="row-que" data-subject="You" data-type="คำถาม">
+            <td class="row-num">6</td><td><span class="ctx-badge ctx-que">คำถาม</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-pres">Do</span> you...? / <span class="kw-pres">Are</span> you...?</td><td class="td-past" data-tense="Past"><span class="kw-past">Did</span> you...? / <span class="kw-past">Were</span> you...?</td><td class="td-fut" data-tense="Future"><span class="kw-fut">Will</span> you...?</td>
+          </tr>
+          <!-- Group 3: He / She / It -->
+          <tr id="matrix-row-7" class="group-start row-aff" data-subject="He" data-type="บอกเล่า">
+            <td class="row-num">7</td><td class="subj-cell" rowspan="3">He/She/It<small>(เอกพจน์)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-pres">is / does</span><br><span class="v-tag" style="border-color:#16a34a;color:#15803d;">V.1 เติม s/es</span></td><td class="td-past" data-tense="Past"><span class="kw-past">was / did</span> / <span class="v-tag">V.2</span></td><td class="td-fut" data-tense="Future"><span class="kw-fut">will</span> + <span class="v-tag">V.ธรรมดา</span></td>
+          </tr>
+          <tr id="matrix-row-8" class="row-neg" data-subject="He" data-type="ปฏิเสธ">
+            <td class="row-num">8</td><td><span class="ctx-badge ctx-neg">ปฏิเสธ</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-neg">doesn't / isn't</span></td><td class="td-past" data-tense="Past"><span class="kw-neg">didn't / wasn't</span></td><td class="td-fut" data-tense="Future"><span class="kw-neg">won't</span> + <span class="v-tag">V.ธรรมดา</span></td>
+          </tr>
+          <tr id="matrix-row-9" class="row-que" data-subject="He" data-type="คำถาม">
+            <td class="row-num">9</td><td><span class="ctx-badge ctx-que">คำถาม</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-pres">Does</span> he...? / <span class="kw-pres">Is</span> he...?</td><td class="td-past" data-tense="Past"><span class="kw-past">Did</span> he...? / <span class="kw-past">Was</span> he...?</td><td class="td-fut" data-tense="Future"><span class="kw-fut">Will</span> he...?</td>
+          </tr>
+          <!-- Group 4: We / They -->
+          <tr id="matrix-row-10" class="group-start row-aff" data-subject="We" data-type="บอกเล่า">
+            <td class="row-num">10</td><td class="subj-cell" rowspan="3">We/They<small>(พหูพจน์)</small></td><td><span class="ctx-badge ctx-aff">บอกเล่า</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-pres">are / do</span><br><span class="v-tag">V.1 ไม่เติม s</span></td><td class="td-past" data-tense="Past"><span class="kw-past">were / did</span> / <span class="v-tag">V.2</span></td><td class="td-fut" data-tense="Future"><span class="kw-fut">will</span> + <span class="v-tag">V.ธรรมดา</span></td>
+          </tr>
+          <tr id="matrix-row-11" class="row-neg" data-subject="We" data-type="ปฏิเสธ">
+            <td class="row-num">11</td><td><span class="ctx-badge ctx-neg">ปฏิเสธ</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-neg">don't / aren't</span></td><td class="td-past" data-tense="Past"><span class="kw-neg">didn't / weren't</span></td><td class="td-fut" data-tense="Future"><span class="kw-neg">won't</span> + <span class="v-tag">V.ธรรมดา</span></td>
+          </tr>
+          <tr id="matrix-row-12" class="row-que" data-subject="We" data-type="คำถาม">
+            <td class="row-num">12</td><td><span class="ctx-badge ctx-que">คำถาม</span></td>
+            <td class="td-pres" data-tense="Present"><span class="kw-pres">Do</span> they...? / <span class="kw-pres">Are</span> they...?</td><td class="td-past" data-tense="Past"><span class="kw-past">Did</span> they...? / <span class="kw-past">Were</span> they...?</td><td class="td-fut" data-tense="Future"><span class="kw-fut">Will</span> they...?</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="extra-cards-grid">
+    <div class="card-shortcut">
+      <div class="card-shortcut-header">💡 3 ข้อจำง่าย (Shortcut)</div>
+      <div class="shortcut-list">
+        <div class="shortcut-item"><div class="num-circle num-1">1</div><div><strong>ปฏิเสธ/คำถามด้วย do, does, did, will:</strong><br>กริยาแท้ใช้รูปธรรมดา (V.base) เสมอ ไม่ต้องเติม s และไม่ต้องเป็น V.2</div></div>
+        <div class="shortcut-item"><div class="num-circle num-2">2</div><div><strong>อนาคต (Future):</strong> ประธานทุกตัวใช้<br>will / won't เหมือนกันหมด</div></div>
+        <div class="shortcut-item"><div class="num-circle num-3">3</div><div><strong>อดีต (Past):</strong> กริยาทั่วไปใช้ did / V.2 เหมือนกันหมด มีแค่ was / were ที่แยกตามประธาน</div></div>
       </div>
+    </div>
+    <div class="card-tense">
+      <div class="card-tense-header">โครงสร้างหลักในแต่ละ Tense</div>
+      <div class="tense-rows">
+        <div class="tense-row"><div class="tense-pill pres">🕒 ปัจจุบัน<br><small>(Present)</small></div><div class="tense-detail pres-bg"><strong>บอกเล่า:</strong> am / is / are / do / does + V.1<br><strong>ปฏิเสธ:</strong> am not / isn't / aren't / don't / doesn't<br><strong>คำถาม:</strong> Am/Is/Are ...? / Do/Does ...?</div></div>
+        <div class="tense-row"><div class="tense-pill past">📅 อดีต<br><small>(Past)</small></div><div class="tense-detail past-bg"><strong>บอกเล่า:</strong> was / were / did + V.2<br><strong>ปฏิเสธ:</strong> wasn't / weren't / didn't<br><strong>คำถาม:</strong> Was/Were ...? / Did ...?</div></div>
+        <div class="tense-row"><div class="tense-pill fut">⏩ อนาคต<br><small>(Future)</small></div><div class="tense-detail fut-bg"><strong>บอกเล่า:</strong> will + V.ธรรมดา<br><strong>ปฏิเสธ:</strong> won't + V.ธรรมดา<br><strong>คำถาม:</strong> Will ...?</div></div>
+      </div>
+    </div>
+    <div class="card-wh">
+      <div class="card-wh-header"><div class="title">❓ คำถามแบบ Wh- Question</div><div class="subtitle">นำคำถามวางไว้หน้าประโยค</div></div>
+      <table class="wh-table">
+        <tbody>
+          <tr><td>What</td><td>อะไร</td><td>What do you like?</td></tr><tr><td>Where</td><td>ที่ไหน</td><td>Where do you live?</td></tr>
+          <tr><td>When</td><td>เมื่อไหร่</td><td>When will you come?</td></tr><tr><td>Why</td><td>ทำไม</td><td>Why did he leave?</td></tr>
+          <tr><td>How</td><td>อย่างไร</td><td>How are you?</td></tr><tr><td>Who</td><td>ใคร</td><td>Who is she?</td></tr>
+          <tr><td>Which</td><td>อันไหน</td><td>Which one do you want?</td></tr><tr><td>Whose</td><td>ของใคร</td><td>Whose book is this?</td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
+<!-- ========================================================================= -->
 
 <script>
   const SUPABASE_URL = 'https://cbdqxxsvnxklmoaesgec.supabase.co';
@@ -459,9 +483,6 @@
     }
   }
 
-  // ==========================================
-  // เคลียร์ค่าทั้งหมดให้เกลี้ยงก่อนเปลี่ยน User 
-  // ==========================================
   function clearLocalGameState() {
     practiceLogs = []; 
     questionQueue = []; 
@@ -469,25 +490,22 @@
     currentIndex = 0; 
     currentQ = null;
     
-    // เคลียร์ UI ในหน้า Dashboard และตัวเลข
     document.getElementById('score').innerText = '0';
     document.getElementById('q-progress').innerText = '1 / 1';
     document.getElementById('history-list').innerHTML = '';
     document.getElementById('dash-summary').innerHTML = 'กำลังโหลด...';
     document.getElementById('dash-grid').innerHTML = '';
     
-    // เคลียร์ตัวเลือกคำถามและข้อความ feedback ในหน้าเกม
     document.getElementById('options-container').innerHTML = '';
     document.getElementById('feedback-box').className = 'feedback';
     document.getElementById('feedback-box').innerHTML = '';
     document.getElementById('question-text').innerText = 'กำลังโหลดโจทย์...';
     
-    // ปิดหน้า Dashboard เสมอตอนล็อกเอาท์
     document.getElementById('dashboard-panel').style.display = 'none';
   }
 
   function logout() {
-    clearLocalGameState(); // ล้าง Memory & UI ทันที
+    clearLocalGameState();
     currentUser = null; 
     displayUserName = null;
     loginType = null;
@@ -495,6 +513,10 @@
     document.getElementById('app-main').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
     document.getElementById('username-input').value = '';
+    
+    // หากเปิดคัมภีร์ค้างไว้ ให้ปิดด้วย
+    const cheatSheet = document.getElementById('cheat-sheet-content');
+    cheatSheet.style.display = 'none';
     
     loadRecentUsersDropdown();
   }
@@ -523,17 +545,13 @@
     const { error } = await sbClient.from('practice_logs').delete().eq('username', currentUser);
     if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); return; }
     
-    // รีเซ็ตตัวแปรคะแนนทันที
     practiceLogs = []; 
     score = 0; 
     document.getElementById('score').innerText = '0';
     
     alert(`รีเซ็ตคะแนนของ ${displayUserName} เรียบร้อยแล้ว!`);
-    
-    // โหลดหน้าโจทย์ใหม่
     applyFiltersAndRestart();
     
-    // ถ้าหน้า Dashboard เปิดอยู่ ให้อัปเดตกราฟใหม่ทันที
     if (document.getElementById('dashboard-panel').style.display === 'block') {
          renderDashboardUI();
     }
@@ -553,7 +571,10 @@
     document.getElementById('display-user-name').innerText = displayUserName;
     document.getElementById('display-login-type').innerText = loginType;
     
-    // เมคชัวร์ว่าค่าถูกเคลียร์แล้วก่อนเริ่มดึงของคนใหม่
+    // ซ่อนคัมภีร์ที่เปิดค้างไว้จากหน้า login
+    const cheatSheet = document.getElementById('cheat-sheet-content');
+    cheatSheet.style.display = 'none';
+    
     clearLocalGameState();
 
     const { data, error } = await sbClient.from('grammar_questions').select('*');
@@ -670,9 +691,7 @@
     });
 
     questionQueue = shuffleArray(filtered);
-    currentIndex = 0; 
-    score = 0; 
-    document.getElementById('score').innerText = score;
+    currentIndex = 0; score = 0; document.getElementById('score').innerText = score;
     renderCurrentQuestion();
   }
 
@@ -777,7 +796,7 @@
 
   async function loadDashboardStats() {
     document.getElementById('dash-summary').innerText = 'กำลังดึงข้อมูล...';
-    await fetchPracticeLogs(); // ดึงประวัติเฉพาะคนนี้ใหม่ล่าสุด
+    await fetchPracticeLogs();
     renderDashboardUI();
   }
 
@@ -836,16 +855,34 @@
     });
   }
 
-  function toggleCheatSheet() {
-    const sheet = document.getElementById('cheat-sheet');
-    const isOpening = sheet.style.display !== 'block';
-    sheet.style.display = isOpening ? 'block' : 'none';
+  // ==========================================
+  // ฟังก์ชันย้ายตารางคัมภีร์ไปมาระหว่างหน้า
+  // ==========================================
+  function toggleCheatSheetGlobal(context) {
+    const cheatSheet = document.getElementById('cheat-sheet-content');
+    const containerLogin = document.getElementById('cheat-sheet-login-container');
+    const containerGame = document.getElementById('cheat-sheet-game-container');
+    
+    const isOpening = cheatSheet.style.display !== 'block';
+    
     if (isOpening) {
-      highlightCurrentMatrixRow();
-      if (showTableReference) {
-        const activeRow = document.querySelector('.active-grammar-row');
-        if (activeRow) activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+        if (context === 'login') {
+            containerLogin.appendChild(cheatSheet);
+        } else {
+            containerGame.appendChild(cheatSheet);
+        }
+        
+        cheatSheet.style.display = 'block';
+        
+        if (context === 'game') {
+            highlightCurrentMatrixRow();
+            if (showTableReference) {
+                const activeRow = document.querySelector('.active-grammar-row');
+                if (activeRow) activeRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    } else {
+        cheatSheet.style.display = 'none';
     }
   }
 </script>
